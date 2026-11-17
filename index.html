@@ -411,9 +411,9 @@ input:focus,select:focus{border-color:var(--gold)}
 
 async function checkLogin(){
   try {
-    if(!){
-      throw new Error("Supabase configuration not found.");
-    }
+   if (!window.supabase || !supabaseClient) {
+  throw new Error("Supabase configuration not found.");
+}
 
     const {data:{session},error} =
       await supabaseClient.auth.getSession();
