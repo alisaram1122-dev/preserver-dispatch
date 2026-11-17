@@ -1,0 +1,625 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preserver Trans LLC | Dispatch Management</title>
+
+<style>
+:root {
+  --navy: #101c32;
+  --navy2: #192943;
+  --gold: #d6a849;
+  --bg: #f3f5f9;
+  --white: #ffffff;
+  --text: #263449;
+  --muted: #8290a3;
+  --border: #e7ebf1;
+  --green: #15966b;
+  --red: #d9534f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 245px;
+  background: var(--navy);
+  color: white;
+  min-height: 100vh;
+  padding: 22px 14px;
+  flex-shrink: 0;
+}
+
+.brand {
+  padding: 8px 12px 25px;
+  border-bottom: 1px solid #30405a;
+  margin-bottom: 22px;
+}
+
+.brand h2 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: 1px;
+}
+
+.brand span {
+  color: var(--gold);
+}
+
+.brand small {
+  display: block;
+  color: #aab5c6;
+  margin-top: 7px;
+  letter-spacing: 2px;
+}
+
+.nav-label {
+  color: #8392a9;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 12px;
+}
+
+.nav-item {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #c5cede;
+  text-align: left;
+  padding: 13px 14px;
+  margin: 3px 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #293b58;
+  color: white;
+}
+
+.nav-item.active {
+  border-left: 3px solid var(--gold);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar {
+  height: 72px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+
+.topbar h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.user {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.user strong {
+  color: var(--text);
+}
+
+.content {
+  padding: 28px;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.page-heading h1 {
+  margin: 0 0 6px;
+  font-size: 25px;
+}
+
+.page-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.btn {
+  background: var(--navy);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 17px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover { background: #263d60; }
+
+.btn-gold {
+  background: var(--gold);
+  color: #18243a;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 17px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.stat-card p {
+  color: var(--muted);
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.stat-card h2 {
+  font-size: 27px;
+  margin: 0;
+}
+
+.stat-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--green);
+}
+
+.panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input, select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  outline: none;
+  color: var(--text);
+}
+
+input:focus, select:focus {
+  border-color: var(--gold);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 750px;
+}
+
+th, td {
+  padding: 15px 17px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+th {
+  background: #f8f9fb;
+  color: #718096;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.active-status { background: #e2f5ed; color: #16845f; }
+.pending-status { background: #fff3d9; color: #a87513; }
+.delivered-status { background: #e7edfb; color: #4769b2; }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 30px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #101c3280;
+  z-index: 10;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal-box {
+  background: white;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 12px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-box h2 { margin-top: 0; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.secondary {
+  background: #edf0f5;
+  color: var(--text);
+}
+
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+.footer {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  padding: 20px;
+}
+
+@media(max-width: 900px) {
+  .sidebar { width: 195px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .content { padding: 18px; }
+}
+
+@media(max-width: 600px) {
+  .layout { display: block; }
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 12px;
+  }
+  .brand { padding: 8px; margin-bottom: 10px; }
+  .nav-label { display: none; }
+  .nav-item {
+    display: inline-block;
+    width: auto;
+    padding: 9px;
+    font-size: 12px;
+  }
+  .topbar { padding: 0 15px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-card h2 { font-size: 22px; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">
+    <h2>PRESERVER <span>TRANS</span></h2>
+    <small>LLC · USA CALIFORNIA</small>
+  </div>
+
+  <div class="nav-label">MAIN MENU</div>
+  <button class="nav-item active" onclick="showPage('dispatch',this)">▦ &nbsp; Dispatch</button>
+  <button class="nav-item" onclick="showPage('loads',this)">▤ &nbsp; Loads</button>
+  <button class="nav-item" onclick="showPage('drivers',this)">♙ &nbsp; Drivers</button>
+  <button class="nav-item" onclick="showPage('trucks',this)">▰ &nbsp; Trucks</button>
+
+  <div class="nav-label">MANAGEMENT</div>
+  <button class="nav-item" onclick="showPage('ifta',this)">▧ &nbsp; IFTA</button>
+  <button class="nav-item" onclick="showPage('maintenance',this)">⚙ &nbsp; Maintenance</button>
+  <button class="nav-item" onclick="showPage('sales',this)">♧ &nbsp; Sales Manager</button>
+  <button class="nav-item" onclick="showPage('accounting',this)">＄ &nbsp; Accounting</button>
+
+  <div class="nav-label">REPORTS & SYSTEM</div>
+  <button class="nav-item" onclick="showPage('reports',this)">▥ &nbsp; Reports</button>
+  <button class="nav-item" onclick="showPage('admin',this)">⚙ &nbsp; Admin / Settings</button>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <h3>Preserver Trans LLC</h3>
+    <div class="user">Dispatcher: <strong>Saim Ali</strong></div>
+  </header>
+
+  <div class="content">
+
+    <section id="dispatch" class="page-section active">
+      <div class="page-heading">
+        <div>
+          <h1>Dispatch Dashboard</h1>
+          <p>Manage your daily trucking operations</p>
+        </div>
+        <button class="btn btn-gold" onclick="openModal()">+ New Load</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <p>Active Loads</p>
+          <h2 id="activeCount">0</h2>
+          <small>Currently in transit</small>
+        </div>
+        <div class="stat-card">
+          <p>Pending Loads</p>
+          <h2 id="pendingCount">0</h2>
+          <small>Waiting for dispatch</small>
+        </div>
+        <div class="stat-card">
+          <p>Delivered Loads</p>
+          <h2 id="deliveredCount">0</h2>
+          <small>Completed deliveries</small>
+        </div>
+        <div class="stat-card">
+          <p>Total Loads</p>
+          <h2 id="totalCount">0</h2>
+          <small>All recorded loads</small>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Dispatch Board</h3>
+          <div class="toolbar">
+            <input id="searchLoad" placeholder="Search loads..." oninput="renderLoads()">
+            <select id="statusFilter" onchange="renderLoads()">
+              <option value="All">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Load #</th>
+                <th>Driver</th>
+                <th>Truck</th>
+                <th>Pickup</th>
+                <th>Delivery</th>
+                <th>Rate</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="loadTable">
+              <tr><td colspan="7" class="empty">No loads added yet. Click New Load to begin.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="loads" class="page-section">
+      <div class="page-heading"><div><h1>Load Management</h1><p>Manage pickup, delivery and load status</p></div>
+      <button class="btn btn-gold" onclick="openModal()">+ Add Load</button></div>
+      <div class="panel"><div class="panel-header"><h3>All Loads</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr></thead><tbody id="allLoadTable"></tbody></table></div></div>
+    </section>
+
+    <section id="drivers" class="page-section">
+      <div class="page-heading"><div><h1>Drivers</h1><p>Driver information and availability</p></div></div>
+      <div class="panel"><div class="panel-header"><h3>Driver Directory</h3></div><div class="empty">Driver management module will be added in the next development step.</div></div>
+    </section>
+
+    <section id="trucks" class="page-section">
+      <div class="page-heading"><div><h1>Trucks</h1><p>Fleet and equipment management</p></div></div>
+      <div class="panel"><div class="panel-header"><h3>Truck Directory</h3></div><div class="empty">Truck management module will be added in the next development step.</div></div>
+    </section>
+
+    <section id="ifta" class="page-section"><div class="page-heading"><div><h1>IFTA</h1><p>Fuel and mileage records</p></div></div><div class="panel"><div class="empty">IFTA module coming soon.</div></div></section>
+    <section id="maintenance" class="page-section"><div class="page-heading"><div><h1>Maintenance</h1><p>Vehicle service and repair records</p></div></div><div class="panel"><div class="empty">Maintenance module coming soon.</div></div></section>
+    <section id="sales" class="page-section"><div class="page-heading"><div><h1>Sales Manager</h1><p>Broker and customer management</p></div></div><div class="panel"><div class="empty">Sales Manager module coming soon.</div></div></section>
+    <section id="accounting" class="page-section"><div class="page-heading"><div><h1>Accounting</h1><p>Revenue, expenses and payments</p></div></div><div class="panel"><div class="empty">Accounting module coming soon.</div></div></section>
+    <section id="reports" class="page-section"><div class="page-heading"><div><h1>Reports</h1><p>Business performance and operations</p></div></div><div class="panel"><div class="empty">Reports module coming soon.</div></div></section>
+    <section id="admin" class="page-section"><div class="page-heading"><div><h1>Admin / Settings</h1><p>Company and system settings</p></div></div><div class="panel"><div class="empty">Admin settings module coming soon.</div></div></section>
+
+  </div>
+  <div class="footer">© 2026 Preserver Trans LLC · Dispatch Management System</div>
+</main>
+</div>
+
+<div class="modal" id="loadModal">
+  <div class="modal-box">
+    <h2>Add New Load</h2>
+    <form id="loadForm">
+      <div class="form-grid">
+        <div class="form-group"><label>Load Number</label><input id="loadNo" required placeholder="e.g. 10001"></div>
+        <div class="form-group"><label>Driver Name</label><input id="driver" required placeholder="Driver name"></div>
+        <div class="form-group"><label>Truck Number</label><input id="truck" required placeholder="Truck number"></div>
+        <div class="form-group"><label>Broker / Company</label><input id="broker" placeholder="Broker name"></div>
+        <div class="form-group"><label>Pickup Location</label><input id="pickup" required placeholder="City, State"></div>
+        <div class="form-group"><label>Delivery Location</label><input id="delivery" required placeholder="City, State"></div>
+        <div class="form-group"><label>Rate ($)</label><input id="rate" type="number" min="0" required placeholder="0"></div>
+        <div class="form-group"><label>Load Status</label>
+          <select id="loadStatus">
+            <option>Pending</option>
+            <option>Active</option>
+            <option>Delivered</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-gold">Save Load</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let loads = [];
+
+function showPage(page, button) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  button.classList.add('active');
+}
+
+function openModal() {
+  document.getElementById('loadModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('loadModal').style.display = 'none';
+}
+
+document.getElementById('loadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const load = {
+    number: document.getElementById('loadNo').value.trim(),
+    driver: document.getElementById('driver').value.trim(),
+    truck: document.getElementById('truck').value.trim(),
+    broker: document.getElementById('broker').value.trim(),
+    pickup: document.getElementById('pickup').value.trim(),
+    delivery: document.getElementById('delivery').value.trim(),
+    rate: Number(document.getElementById('rate').value),
+    status: document.getElementById('loadStatus').value
+  };
+
+  if (loads.some(item => item.number === load.number)) {
+    alert('This load number already exists.');
+    return;
+  }
+
+  loads.push(load);
+  this.reset();
+  closeModal();
+  renderLoads();
+});
+
+function renderLoads() {
+  const search = (document.getElementById('searchLoad')?.value || '').toLowerCase();
+  const filter = document.getElementById('statusFilter')?.value || 'All';
+
+  const filtered = loads.filter(load => {
+    const matchesSearch = Object.values(load).join(' ').toLowerCase().includes(search);
+    const matchesStatus = filter === 'All' || load.status === filter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const rows = filtered.map(load => {
+    let statusClass = load.status === 'Active' ? 'active-status' :
+      load.status === 'Delivered' ? 'delivered-status' : 'pending-status';
+
+    return `<tr>
+      <td><strong>${escapeHTML(load.number)}</strong></td>
+      <td>${escapeHTML(load.driver)}</td>
+      <td>${escapeHTML(load.truck)}</td>
+      <td>${escapeHTML(load.pickup)}</td>
+      <td>${escapeHTML(load.delivery)}</td>
+      <td>$${load.rate.toLocaleString('en-US')}</td>
+      <td><span class="status ${statusClass}">${load.status}</span></td>
+    </tr>`;
+  }).join('');
+
+  const emptyRow = '<tr><td colspan="7" class="empty">No matching loads found.</td></tr>';
+  document.getElementById('loadTable').innerHTML = rows || emptyRow;
+  document.getElementById('allLoadTable').innerHTML = rows || emptyRow;
+
+  document.getElementById('activeCount').textContent = loads.filter(x => x.status === 'Active').length;
+  document.getElementById('pendingCount').textContent = loads.filter(x => x.status === 'Pending').length;
+  document.getElementById('deliveredCount').textContent = loads.filter(x => x.status === 'Delivered').length;
+  document.getElementById('totalCount').textContent = loads.length;
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;',
+    '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+renderLoads();
+</script>
+</body>
+</html>
