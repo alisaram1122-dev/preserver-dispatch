@@ -440,6 +440,7 @@ async function checkLogin(){
       (profile.full_name || profile.username) + " (" + profile.role + ")";
 
     document.getElementById("appContent").style.display="block";
+    console.log("Dashboard is now visible");
 
   } catch(error){
     console.error(error);
