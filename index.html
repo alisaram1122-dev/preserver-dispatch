@@ -717,6 +717,32 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
       .single();
 
     if(error) throw error;
+    // CREATE DRIVER TRACKING LINK
+if (String(data.status || "").toLowerCase().includes("dispatch")) {
+
+  const { data: trackingSession, error: trackingError } =
+    await supabaseClient
+      .from("tracking_sessions")
+      .insert({
+        load_number: data.load_number,
+        driver_name: data.driver,
+        truck_number: data.truck
+      })
+      .select()
+      .single();
+
+  if (trackingError) throw trackingError;
+
+  const trackingLink = new URL("tracking.html", window.location.href);
+  trackingLink.searchParams.set("token", trackingSession.token);
+
+  try {
+    await navigator.clipboard.writeText(trackingLink.href);
+    alert("Driver tracking link copied!\n\n" + trackingLink.href);
+  } catch (e) {
+    prompt("Copy this driver tracking link:", trackingLink.href);
+  }
+}
 
     loads.push({
       number: data.load_number,
