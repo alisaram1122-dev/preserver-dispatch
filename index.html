@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  #liveTruckMap {
+    width: 100%;
+    height: 550px;
+    border-radius: 12px;
+    z-index: 1;
+  }
+</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Preserver Trans LLC | Management System</title>
@@ -136,6 +151,12 @@ input:focus,select:focus{border-color:var(--gold)}
 </header>
 
 <div class="content">
+  <!-- LIVE TRUCK TRACKING MAP -->
+<div class="card">
+  <h2>🌍 Live Truck Tracking</h2>
+  <p>Track all dispatched trucks on the map.</p>
+  <div id="liveTruckMap"></div>
+</div>
 
 <section id="dispatch" class="page-section active">
   <div class="page-heading">
@@ -724,6 +745,45 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
 // ------------------------------------
   renderLoads();
 });
+  // ------------------------------------
+// LOAD DATA FROM SUPABASE
+// ------------------------------------
+
+async function loadSavedLoads(){
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("loads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if(error) throw error;
+
+    loads = data.map(item => ({
+      id: item.id,
+      number: item.load_number,
+      driver: item.driver,
+      truck: item.truck,
+      broker: item.broker,
+      pickup: item.pickup,
+      delivery: item.delivery,
+      rate: Number(item.rate),
+      status: item.status
+    }));
+
+    renderLoads();
+    // Show dispatched trucks on map
+loads
+  .filter(load =>
+    String(load.status || "").toLowerCase().includes("dispatch")
+  )
+  .forEach(load => showTruckRoute(load));
+
+  } catch(error) {
+    console.error("Load loading error:", error);
+    alert("Could not load saved loads: " + error.message);
+  }
+}
 
 function renderLoads(){
   const search=(document.getElementById("searchLoad")?.value||"").toLowerCase();
@@ -770,23 +830,58 @@ function renderLoads(){
 // DRIVER MANAGEMENT
 // ------------------------------------
 
-document.getElementById("driverForm").addEventListener("submit",function(e){
+document.getElementById("driverForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  drivers.push({
-    name:document.getElementById("driverName").value.trim(),
-    phone:document.getElementById("driverPhone").value.trim(),
-    truck:document.getElementById("driverTruck").value.trim(),
-    address:getAddress("driver")
-  });
+  const newDriver = {
+    name: document.getElementById("driverName").value.trim(),
+    phone: document.getElementById("driverPhone").value.trim(),
+    truck: document.getElementById("driverTruck").value.trim(),
+    address: getAddress("driver")
+  };
 
-  renderDrivers();
-  this.reset();
-  closeModal("driverModal");
+  try {
+    const { data, error } = await supabaseClient
+      .from("drivers")
+      .insert(newDriver)
+      .select()
+      .single();
+
+    if(error) throw error;
+
+    drivers.push(data);
+    renderDrivers();
+    this.reset();
+    closeModal("driverModal");
+
+    alert("Driver saved successfully!");
+
+  } catch(error) {
+    console.error("Driver saving error:", error);
+    alert("Driver could not be saved: " + error.message);
+  }
 });
 
+async function loadSavedDrivers(){
+  try {
+    const { data, error } = await supabaseClient
+      .from("drivers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if(error) throw error;
+
+    drivers = data || [];
+    renderDrivers();
+
+  } catch(error) {
+    console.error("Driver loading error:", error);
+    alert("Could not load drivers: " + error.message);
+  }
+}
+
 function renderDrivers(){
-  document.getElementById("driverTable").innerHTML=drivers.map(d=>`
+  document.getElementById("driverTable").innerHTML = drivers.map(d => `
     <tr>
       <td>${escapeHTML(d.name)}</td>
       <td>${escapeHTML(d.phone)}</td>
@@ -795,26 +890,62 @@ function renderDrivers(){
     </tr>
   `).join("") || '<tr><td colspan="4" class="empty">No drivers added.</td></tr>';
 }
-
 // ------------------------------------
 // CUSTOMER MANAGEMENT
 // ------------------------------------
 
-document.getElementById("customerForm").addEventListener("submit",function(e){
+document.getElementById("customerForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  customers.push({
-    company:document.getElementById("customerCompany").value.trim(),
-    contact:document.getElementById("customerContact").value.trim(),
-    phone:document.getElementById("customerPhone").value.trim(),
-    email:document.getElementById("customerEmail").value.trim(),
-    address:getAddress("customer")
-  });
+  const newCustomer = {
+    company: document.getElementById("customerCompany").value.trim(),
+    contact: document.getElementById("customerContact").value.trim(),
+    phone: document.getElementById("customerPhone").value.trim(),
+    email: document.getElementById("customerEmail").value.trim(),
+    address: getAddress("customer")
+  };
 
-  renderCustomers();
-  this.reset();
-  closeModal("customerModal");
+  try {
+    const { data, error } = await supabaseClient
+      .from("customers")
+      .insert(newCustomer)
+      .select()
+      .single();
+
+    if(error) throw error;
+
+    customers.push(data);
+
+    renderCustomers();
+    this.reset();
+    closeModal("customerModal");
+
+    alert("Customer saved successfully!");
+
+  } catch(error) {
+    console.error("Customer saving error:", error);
+    alert("Customer could not be saved: " + error.message);
+  }
 });
+
+
+async function loadSavedCustomers(){
+  try {
+    const { data, error } = await supabaseClient
+      .from("customers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if(error) throw error;
+
+    customers = data || [];
+    renderCustomers();
+
+  } catch(error) {
+    console.error("Customer loading error:", error);
+    alert("Could not load customers: " + error.message);
+  }
+}
 
 function renderCustomers(){
   document.getElementById("customerTable").innerHTML=customers.map(c=>`
@@ -840,16 +971,160 @@ function escapeHTML(value){
     "'":"&#39;"
   })[char
 }
+  // ------------------------------------
+// LIVE TRUCK MAP
+// ------------------------------------
 
+let liveTruckMap;
+
+function initializeTruckMap() {
+  const mapElement = document.getElementById("liveTruckMap");
+
+  if (!mapElement || liveTruckMap) return;
+
+  liveTruckMap = L.map("liveTruckMap").setView([39.8283, -98.5795], 4);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(liveTruckMap);
+}
+  // ------------------------------------
+// TRUCK ROUTE DISPLAY
+// ------------------------------------
+
+let truckRoutes = [];
+
+async function getMapCoordinates(address) {
+  const response = await fetch(
+    "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+    encodeURIComponent(address)
+  );
+
+  const data = await response.json();
+
+  if (!data.length) return null;
+
+  return [
+    parseFloat(data[0].lat),
+    parseFloat(data[0].lon)
+  ];
+}
+
+async function showTruckRoute(load) {
+  if (!liveTruckMap || !load.pickup || !load.delivery) return;
+
+  try {
+    const start = await getMapCoordinates(load.pickup);
+    const end = await getMapCoordinates(load.delivery);
+
+    if (!start || !end) {
+      console.log("Location not found for load:", load.load_number);
+      return;
+    }
+
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
+    );
+
+    const result = await response.json();
+
+    if (result.code !== "Ok") return;
+
+    const route = L.geoJSON(result.routes[0].geometry, {
+      style: {
+        color: "#d4a017",
+        weight: 5
+      }
+    }).addTo(liveTruckMap);
+
+    const driverMarker = L.marker(start).addTo(liveTruckMap);
+
+    driverMarker.bindPopup(
+      `<b>Driver:</b> ${escapeHTML(load.driver || "N/A")}<br>
+       <b>Truck:</b> ${escapeHTML(load.truck || "N/A")}<br>
+       <b>Load:</b> ${escapeHTML(load.load_number || "N/A")}`
+    );
+
+    L.marker(end).addTo(liveTruckMap)
+      .bindPopup("Delivery: " + escapeHTML(load.delivery));
+
+    truckRoutes.push(route, driverMarker);
+
+    liveTruckMap.fitBounds(route.getBounds(), { padding: [30, 30] });
+
+  } catch (error) {
+    console.error("Truck route error:", error);
+  }
+}
+
+initializeTruckMap();
+  // ------------------------------------
+// LIVE GPS LOCATION RECEIVER
+// ------------------------------------
+
+const liveTruckMarkers = {};
+
+async function updateTruckMarker(location) {
+  if (!liveTruckMap || !location.latitude || !location.longitude) return;
+
+  const truckId = location.load_number;
+
+  const position = [
+    Number(location.latitude),
+    Number(location.longitude)
+  ];
+
+  if (liveTruckMarkers[truckId]) {
+    liveTruckMarkers[truckId].setLatLng(position);
+  } else {
+    liveTruckMarkers[truckId] = L.marker(position).addTo(liveTruckMap);
+  }
+
+  liveTruckMarkers[truckId].bindPopup(`
+    <b>Driver:</b> ${escapeHTML(location.driver_name || "N/A")}<br>
+    <b>Truck:</b> ${escapeHTML(location.truck_number || "N/A")}<br>
+    <b>Load:</b> ${escapeHTML(location.load_number || "N/A")}
+  `);
+}
+
+async function startLiveTruckTracking() {
+  const { data, error } = await supabaseClient
+    .from("truck_locations")
+    .select("*");
+
+  if (error) {
+    console.error("GPS loading error:", error);
+    return;
+  }
+
+  (data || []).forEach(updateTruckMarker);
+
+  supabaseClient
+    .channel("live-truck-locations")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "truck_locations"
+      },
+      payload => {
+        if (payload.new) updateTruckMarker(payload.new);
+      }
+    )
+    .subscribe();
+}
+
+startLiveTruckTracking();
 // ------------------------------------
 // START APPLICATION
 // ------------------------------------
 
 setupAllAddresses();
 loadCountries();
-renderLoads();
-renderDrivers();
-renderCustomers();
+loadSavedLoads();
+loadSavedDrivers();
+loadSavedCustomers();
 checkLogin();
 
 </script>
