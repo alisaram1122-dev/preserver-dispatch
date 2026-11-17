@@ -59,7 +59,12 @@ body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text
 .page-heading p{margin:0;color:var(--muted);font-size:13px}
 .btn{background:var(--navy);color:white;border:0;border-radius:6px;padding:11px 17px;cursor:pointer;font-weight:600}
 .btn-gold{background:var(--gold);color:#18243a}
-.btn-red{background:#c0392b;color:white}\n.btn-whatsapp{background:#168b55;color:white;border:0;border-radius:6px;padding:8px 10px;cursor:pointer;font-weight:600;white-space:nowrap}\n.btn-whatsapp:hover{background:#117344}
+.btn-red{background:#c0392b;color:white}
+.btn-whatsapp{background:#168b55;color:white;border:0;border-radius:6px;padding:8px 10px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn-whatsapp:hover{background:#117344}
+.dispatch-account{font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e7ebf1;padding:7px 10px;border-radius:7px}
+.driver-assignment-note{font-size:12px;color:#64748b;margin-top:6px}
+
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:17px;margin-bottom:25px}
 .stat-card,.panel{background:white;border:1px solid var(--border);border-radius:10px}
 .stat-card{padding:20px}
@@ -145,7 +150,7 @@ input:focus,select:focus{border-color:var(--gold)}
   <h3>Preserver Trans LLC</h3>
   <div class="user">
     <span id="loggedInName">Loading...</span>
-    &nbsp; | &nbsp;
+    &nbsp; | &nbsp; <span class="dispatch-account">Dispatch WhatsApp: <strong>5305656348</strong></span> &nbsp; | &nbsp;
     <button class="btn btn-red" onclick="logout()">Logout</button>
   </div>
 </header>
@@ -294,7 +299,7 @@ input:focus,select:focus{border-color:var(--gold)}
 
 <section id="admin" class="page-section">
   <div class="page-heading"><div><h1>Admin / Settings</h1><p>Company and system settings</p></div></div>
-  <div class="panel"><div class="empty">Admin settings module is ready for development.</div></div>
+  <div class="panel"><div class="panel-header"><h3>Dispatch WhatsApp Contact</h3></div><div style="padding:20px"><p>Company dispatch contact configured in this dashboard:</p><h2 style="margin:8px 0;color:#d6a849">5305656348</h2><p class="small-note">For outgoing WhatsApp messages, WhatsApp Web opens the driver's chat. The sender account is the WhatsApp account currently signed in on this browser. To send specifically from 5305656348, sign in to WhatsApp Web using that number, or connect the WhatsApp Business Platform API through a secure backend.</p></div></div>
 </section>
 
 </div>
@@ -311,8 +316,9 @@ input:focus,select:focus{border-color:var(--gold)}
 
 <div class="form-grid">
   <div class="form-group"><label>Load Number</label><input id="loadNo" required></div>
-  <div class="form-group"><label>Driver Name</label><input id="loadDriver" required></div>
-  <div class="form-group"><label>Truck Number</label><input id="loadTruck" required></div>
+  <div class="form-group"><label>Assign Driver</label><select id="loadDriver" required onchange="fillAssignedDriverDetails()"><option value="">Select Driver</option></select><div class="driver-assignment-note">Select from drivers already saved in Driver Management.</div></div>
+  <div class="form-group"><label>Truck Number</label><input id="loadTruck" required readonly placeholder="Auto-filled from driver"></div>
+  <div class="form-group"><label>Driver Phone</label><input id="loadDriverPhone" readonly placeholder="Auto-filled from driver"></div>
   <div class="form-group"><label>Broker / Company</label><input id="loadBroker"></div>
   <div class="form-group"><label>Rate ($)</label><input id="loadRate" type="number" min="0" required></div>
   <div class="form-group"><label>Status</label>
@@ -357,7 +363,7 @@ input:focus,select:focus{border-color:var(--gold)}
 <form id="driverForm">
 <div class="form-grid">
   <div class="form-group"><label>Driver Name</label><input id="driverName" required></div>
-  <div class="form-group"><label>Phone Number</label><input id="driverPhone"></div>
+  <div class="form-group"><label>WhatsApp Phone Number</label><input id="driverPhone" type="tel" required placeholder="Country code + number"></div>
   <div class="form-group"><label>Truck Number</label><input id="driverTruck"></div>
 </div>
 <div class="address-box">
@@ -689,6 +695,32 @@ function getAddress(prefix) {
 
 
 // ------------------------------------
+// DRIVER ASSIGNMENT DROPDOWN
+// ------------------------------------
+
+function renderDriverOptions(selectedValue = "") {
+  const select = document.getElementById("loadDriver");
+  if (!select) return;
+  const current = selectedValue || select.value;
+  select.innerHTML = '<option value="">Select Driver</option>' + drivers.map(d => {
+    const key = String(d.id || d.name);
+    const label = `${d.name || "Unnamed"} — Truck ${d.truck || "N/A"}`;
+    return `<option value="${escapeHTML(key)}">${escapeHTML(label)}</option>`;
+  }).join("");
+  if (current && [...select.options].some(o => o.value === current)) select.value = current;
+  fillAssignedDriverDetails();
+}
+
+function fillAssignedDriverDetails() {
+  const select = document.getElementById("loadDriver");
+  const driver = drivers.find(d => String(d.id || d.name) === String(select?.value || ""));
+  const truck = document.getElementById("loadTruck");
+  const phone = document.getElementById("loadDriverPhone");
+  if (truck) truck.value = driver?.truck || "";
+  if (phone) phone.value = driver?.phone || "";
+}
+
+// ------------------------------------
 // LOAD MANAGEMENT
 // ------------------------------------
 
@@ -722,10 +754,16 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
     return;
   }
 
+  const selectedDriver = drivers.find(d => String(d.id || d.name) === document.getElementById("loadDriver").value);
+  if (!selectedDriver) {
+    alert("Please select a driver from the saved Driver list.");
+    return;
+  }
+
   const newLoad = {
     load_number: number,
-    driver: document.getElementById("loadDriver").value.trim(),
-    truck: document.getElementById("loadTruck").value.trim(),
+    driver: selectedDriver.name,
+    truck: selectedDriver.truck || document.getElementById("loadTruck").value.trim(),
     broker: document.getElementById("loadBroker").value.trim(),
     pickup: pickup,
     delivery: delivery,
@@ -904,6 +942,9 @@ function normalizeWhatsAppPhone(phone) {
 }
 
 async function sendDispatchToDriver(loadNumber) {
+  // WhatsApp's sender is the account currently signed in to WhatsApp Web.
+  // The configured company contact 5305656348 is included in the message;
+  // it cannot force the sender identity without WhatsApp Business API backend.
   // Open a blank tab immediately so the browser does not block WhatsApp
   // after the asynchronous tracking-link request.
   const whatsappWindow = window.open("about:blank", "_blank");
@@ -933,6 +974,7 @@ async function sendDispatchToDriver(loadNumber) {
       "Truck Number: " + (load.truck || "N/A"),
       "Pickup: " + (load.pickup || "N/A"),
       "Delivery: " + (load.delivery || "N/A"),
+      "Dispatch Contact: 5305656348",
       "",
       "Please open this link and allow location access while driving:",
       trackingLink
@@ -1047,6 +1089,7 @@ document.getElementById("driverForm").addEventListener("submit", async function(
 
     drivers.push(data);
     renderDrivers();
+    renderDriverOptions();
     renderLoads();
     this.reset();
     closeModal("driverModal");
@@ -1070,6 +1113,7 @@ async function loadSavedDrivers(){
 
     drivers = data || [];
     renderDrivers();
+    renderDriverOptions();
     renderLoads();
 
   } catch(error) {
@@ -1087,6 +1131,7 @@ function renderDrivers(){
       <td>${escapeHTML(d.address)}</td>
     </tr>
   `).join("") || '<tr><td colspan="4" class="empty">No drivers added.</td></tr>';
+  renderDriverOptions();
 }
 // ------------------------------------
 // CUSTOMER MANAGEMENT
