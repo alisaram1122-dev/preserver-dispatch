@@ -434,140 +434,215 @@ function closeModal(id){
   document.getElementById(id).style.display="none";
 }
 
+
 // ------------------------------------
 // GLOBAL COUNTRY / STATE / CITY DATA
 // ------------------------------------
 
 const API = "https://countriesnow.space/api/v0.1/countries";
 
-async function loadCountries(){
-  try{
+async function loadCountries() {
+  const selects = document.querySelectorAll(".country-select");
+
+  selects.forEach(select => {
+    select.innerHTML = '<option value="">Loading countries...</option>';
+    select.disabled = true;
+  });
+
+  try {
     const response = await fetch(API);
+    if (!response.ok) throw new Error("Country API error");
+
     const result = await response.json();
+    if (!result.data) throw new Error("Country data unavailable");
 
-    if(!result.data) throw new Error("Country list unavailable");
+    const countries = result.data
+      .map(item => item.country)
+      .filter(Boolean)
+      .sort();
 
-    const countries = result.data.map(x=>x.country).sort();
+    selects.forEach(select => {
+      select.innerHTML = '<option value="">Select Country</option>';
 
-    document.querySelectorAll(".country-select").forEach(select=>{
-      select.innerHTML='<option value="">Select Country</option>';
-
-      countries.forEach(country=>{
-        const option=document.createElement("option");
-        option.value=country;
-        option.textContent=country;
+      countries.forEach(country => {
+        const option = document.createElement("option");
+        option.value = country;
+        option.textContent = country;
         select.appendChild(option);
       });
+
+      select.disabled = false;
     });
 
-  }catch(error){
-    console.error("Countries loading error:",error);
-    alert("Countries could not load. Please refresh the page.");
+  } catch (error) {
+    console.error("Country loading error:", error);
+
+    selects.forEach(select => {
+      select.innerHTML = '<option value="">Countries unavailable - Refresh</option>';
+      select.disabled = false;
+    });
   }
 }
 
-// Reusable cascading dropdowns
-function setupAddress(prefix){
+// ------------------------------------
+// ADDRESS DROPDOWN SYSTEM
+// ------------------------------------
 
-  const country=document.getElementById(prefix+"Country");
-  const state=document.getElementById(prefix+"State");
-  const city=document.getElementById(prefix+"City");
+function setupAddress(prefix) {
+  const country = document.getElementById(prefix + "Country");
+  const state = document.getElementById(prefix + "State");
+  const city = document.getElementById(prefix + "City");
+  const zip = document.getElementById(prefix + "Zip");
 
-  country.addEventListener("change",async()=>{
-    state.innerHTML='<option value="">Loading states...</option>';
-    city.innerHTML='<option value="">Select City</option>';
-    state.disabled=true;
-    city.disabled=true;
+  if (!country || !state || !city || !zip) return;
 
-    if(!country.value){
-      state.innerHTML='<option value="">Select State</option>';
+  let stateRequest = 0;
+  let cityRequest = 0;
+
+  country.addEventListener("change", async () => {
+    const requestId = ++stateRequest;
+    ++cityRequest;
+
+    state.innerHTML = '<option value="">Loading states...</option>';
+    city.innerHTML = '<option value="">Select City</option>';
+
+    state.disabled = true;
+    city.disabled = true;
+    zip.value = "";
+
+    if (!country.value) {
+      state.innerHTML = '<option value="">Select State</option>';
       return;
     }
 
-    try{
-      const response=await fetch(API+"/states",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({country:country.value})
+    try {
+      const response = await fetch(API + "/states", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country: country.value })
       });
 
-      const result=await response.json();
+      if (!response.ok) throw new Error("State API error");
 
-      state.innerHTML='<option value="">Select State</option>';
+      const result = await response.json();
 
-      if(result.data && result.data.states){
-        result.data.states.forEach(item=>{
-          const option=document.createElement("option");
-          option.value=item.name;
-          option.textContent=item.name;
+      if (requestId !== stateRequest) return;
+
+      state.innerHTML = '<option value="">Select State / Province</option>';
+
+      const states = result.data?.states || [];
+
+      states
+        .map(item => item.name)
+        .filter(Boolean)
+        .sort()
+        .forEach(stateName => {
+          const option = document.createElement("option");
+          option.value = stateName;
+          option.textContent = stateName;
           state.appendChild(option);
         });
-      }
 
-      state.disabled=false;
+      state.disabled = false;
 
-    }catch(error){
-      state.innerHTML='<option value="">States unavailable</option>';
-      console.error(error);
+    } catch (error) {
+      if (requestId !== stateRequest) return;
+
+      console.error("State loading error:", error);
+      state.innerHTML = '<option value="">States unavailable</option>';
+      state.disabled = false;
     }
   });
 
-  state.addEventListener("change",async()=>{
-    city.innerHTML='<option value="">Loading cities...</option>';
-    city.disabled=true;
+  state.addEventListener("change", async () => {
+    const requestId = ++cityRequest;
 
-    if(!state.value){
-      city.innerHTML='<option value="">Select City</option>';
+    city.innerHTML = '<option value="">Loading cities...</option>';
+    city.disabled = true;
+    zip.value = "";
+
+    if (!state.value) {
+      city.innerHTML = '<option value="">Select City</option>';
       return;
     }
 
-    try{
-      const response=await fetch(API+"/state/cities",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          country:country.value,
-          state:state.value
+    try {
+      const response = await fetch(API + "/state/cities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: country.value,
+          state: state.value
         })
       });
 
-      const result=await response.json();
+      if (!response.ok) throw new Error("City API error");
 
-      city.innerHTML='<option value="">Select City</option>';
+      const result = await response.json();
 
-      if(result.data){
-        result.data.sort().forEach(cityName=>{
-          const option=document.createElement("option");
-          option.value=cityName;
-          option.textContent=cityName;
+      if (requestId !== cityRequest) return;
+
+      city.innerHTML = '<option value="">Select City</option>';
+
+      const cities = result.data || [];
+
+      cities
+        .filter(Boolean)
+        .sort()
+        .forEach(cityName => {
+          const option = document.createElement("option");
+          option.value = cityName;
+          option.textContent = cityName;
           city.appendChild(option);
         });
-      }
 
-      city.disabled=false;
+      city.disabled = false;
 
-    }catch(error){
-      city.innerHTML='<option value="">Cities unavailable</option>';
-      console.error(error);
+    } catch (error) {
+      if (requestId !== cityRequest) return;
+
+      console.error("City loading error:", error);
+      city.innerHTML = '<option value="">Cities unavailable</option>';
+      city.disabled = false;
     }
+  });
+
+  // Clear old ZIP when city changes.
+  city.addEventListener("change", () => {
+    zip.value = "";
   });
 }
 
-function setupAllAddresses(){
+// ------------------------------------
+// SETUP ALL ADDRESS FIELDS
+// ------------------------------------
+
+function setupAllAddresses() {
   [
-    "pickup","delivery","driver","customer"
+    "pickup",
+    "delivery",
+    "driver",
+    "customer"
   ].forEach(setupAddress);
 }
 
-function getAddress(prefix){
-  const street=document.getElementById(prefix+"Street").value.trim();
-  const country=document.getElementById(prefix+"Country").value;
-  const state=document.getElementById(prefix+"State").value;
-  const city=document.getElementById(prefix+"City").value;
-  const zip=document.getElementById(prefix+"Zip").value.trim();
+// ------------------------------------
+// BUILD COMPLETE ADDRESS
+// ------------------------------------
 
-  return [street,city,state,zip,country].filter(Boolean).join(", ");
+function getAddress(prefix) {
+  const street = document.getElementById(prefix + "Street").value.trim();
+  const country = document.getElementById(prefix + "Country").value;
+  const state = document.getElementById(prefix + "State").value;
+  const city = document.getElementById(prefix + "City").value;
+  const zip = document.getElementById(prefix + "Zip").value.trim();
+
+  return [street, city, state, zip, country]
+    .filter(Boolean)
+    .join(", ");
 }
+
+
 
 // ------------------------------------
 // LOAD MANAGEMENT
@@ -731,7 +806,7 @@ function escapeHTML(value){
     ">":"&gt;",
     '"':"&quot;",
     "'":"&#39;"
-  })[char]);
+  })[char
 }
 
 // ------------------------------------
