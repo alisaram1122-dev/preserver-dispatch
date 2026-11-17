@@ -797,7 +797,6 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
 // LOAD MANAGEMENT
 // ------------------------------------
   renderLoads();
-});
   // ------------------------------------
 // LOAD DATA FROM SUPABASE
 // ------------------------------------
@@ -1070,14 +1069,14 @@ function renderCustomers(){
 // SECURITY / HTML OUTPUT
 // ------------------------------------
 
-function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,char=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  })[char
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
 }
   // ------------------------------------
 // LIVE TRUCK MAP
@@ -1174,8 +1173,11 @@ initializeTruckMap();
 const liveTruckMarkers = {};
 
 async function updateTruckMarker(location) {
-  if (!liveTruckMap || !location.latitude || !location.longitude) return;
-
+ if (
+  !liveTruckMap ||
+  location.latitude == null ||
+  location.longitude == null
+) return;
   const truckId = location.load_number;
 
   const position = [
