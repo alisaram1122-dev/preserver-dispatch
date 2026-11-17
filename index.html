@@ -1,382 +1,103 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preserver Trans LLC | Dispatch Management</title>
+<title>Preserver Trans LLC | Management System</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 
 <style>
 :root {
-  --navy: #101c32;
-  --navy2: #192943;
-  --gold: #d6a849;
-  --bg: #f3f5f9;
-  --white: #ffffff;
-  --text: #263449;
-  --muted: #8290a3;
-  --border: #e7ebf1;
-  --green: #15966b;
-  --red: #d9534f;
+  --navy:#101c32;
+  --navy2:#192943;
+  --gold:#d6a849;
+  --bg:#f3f5f9;
+  --white:#fff;
+  --text:#263449;
+  --muted:#8290a3;
+  --border:#e7ebf1;
+  --green:#15966b;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:245px;background:var(--navy);color:white;padding:22px 14px;flex-shrink:0}
+.brand{padding:8px 12px 25px;border-bottom:1px solid #30405a;margin-bottom:22px}
+.brand h2{margin:0;font-size:21px;letter-spacing:1px}
+.brand span{color:var(--gold)}
+.brand small{display:block;color:#aab5c6;margin-top:7px;letter-spacing:2px}
+.nav-label{color:#8392a9;font-size:10px;letter-spacing:1.5px;padding:12px}
+.nav-item{display:block;width:100%;border:0;background:transparent;color:#c5cede;text-align:left;padding:13px 14px;margin:3px 0;border-radius:7px;cursor:pointer;font-size:14px}
+.nav-item:hover,.nav-item.active{background:#293b58;color:white}
+.nav-item.active{border-left:3px solid var(--gold)}
+.main{flex:1;min-width:0}
+.topbar{min-height:72px;background:white;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 28px;gap:15px}
+.topbar h3{margin:0;font-size:18px}
+.user{font-size:13px;color:var(--muted)}
+.content{padding:28px}
+.page-section{display:none}
+.page-section.active{display:block}
+.page-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:24px}
+.page-heading h1{margin:0 0 6px;font-size:25px}
+.page-heading p{margin:0;color:var(--muted);font-size:13px}
+.btn{background:var(--navy);color:white;border:0;border-radius:6px;padding:11px 17px;cursor:pointer;font-weight:600}
+.btn-gold{background:var(--gold);color:#18243a}
+.btn-red{background:#c0392b;color:white}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:17px;margin-bottom:25px}
+.stat-card,.panel{background:white;border:1px solid var(--border);border-radius:10px}
+.stat-card{padding:20px}
+.stat-card p{color:var(--muted);margin:0 0 12px;font-size:13px}
+.stat-card h2{font-size:27px;margin:0}
+.panel{margin-bottom:22px;overflow:hidden}
+.panel-header{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.panel-header h3{margin:0;font-size:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:750px}
+th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+th{background:#f8f9fb;color:#718096;font-size:11px;text-transform:uppercase}
+input,select{padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:white;outline:none;color:var(--text);width:100%}
+input:focus,select:focus{border-color:var(--gold)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-group label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;background:#101c3280;z-index:10;align-items:center;justify-content:center;padding:15px}
+.modal-box{background:white;width:100%;max-width:650px;border-radius:12px;padding:25px;max-height:90vh;overflow-y:auto}
+.modal-box h2{margin-top:0}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.secondary{background:#edf0f5;color:var(--text)}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:bold}
+.active-status{background:#e2f5ed;color:#16845f}
+.pending-status{background:#fff3d9;color:#a87513}
+.delivered-status{background:#e7edfb;color:#4769b2}
+.empty{text-align:center;color:var(--muted);padding:30px}
+.address-box{border:1px solid var(--border);padding:14px;border-radius:8px;margin:8px 0 15px}
+.address-box h4{margin:0 0 12px;font-size:14px}
+.address-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small-note{font-size:11px;color:var(--muted);margin-top:5px}
+.footer{color:var(--muted);font-size:11px;text-align:center;padding:20px}
+#appContent{display:none}
+@media(max-width:900px){
+.sidebar{width:195px}
+.stats{grid-template-columns:repeat(2,1fr)}
+.content{padding:18px}
 }
-
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-.sidebar {
-  width: 245px;
-  background: var(--navy);
-  color: white;
-  min-height: 100vh;
-  padding: 22px 14px;
-  flex-shrink: 0;
-}
-
-.brand {
-  padding: 8px 12px 25px;
-  border-bottom: 1px solid #30405a;
-  margin-bottom: 22px;
-}
-
-.brand h2 {
-  margin: 0;
-  font-size: 21px;
-  letter-spacing: 1px;
-}
-
-.brand span {
-  color: var(--gold);
-}
-
-.brand small {
-  display: block;
-  color: #aab5c6;
-  margin-top: 7px;
-  letter-spacing: 2px;
-}
-
-.nav-label {
-  color: #8392a9;
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  padding: 12px;
-}
-
-.nav-item {
-  display: block;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: #c5cede;
-  text-align: left;
-  padding: 13px 14px;
-  margin: 3px 0;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: #293b58;
-  color: white;
-}
-
-.nav-item.active {
-  border-left: 3px solid var(--gold);
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-}
-
-.topbar {
-  height: 72px;
-  background: white;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
-}
-
-.topbar h3 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.user {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.user strong {
-  color: var(--text);
-}
-
-.content {
-  padding: 28px;
-}
-
-.page-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
-}
-
-.page-heading h1 {
-  margin: 0 0 6px;
-  font-size: 25px;
-}
-
-.page-heading p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.btn {
-  background: var(--navy);
-  color: white;
-  border: 0;
-  border-radius: 6px;
-  padding: 11px 17px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn:hover { background: #263d60; }
-
-.btn-gold {
-  background: var(--gold);
-  color: #18243a;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 17px;
-  margin-bottom: 25px;
-}
-
-.stat-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 20px;
-}
-
-.stat-card p {
-  color: var(--muted);
-  margin: 0 0 12px;
-  font-size: 13px;
-}
-
-.stat-card h2 {
-  font-size: 27px;
-  margin: 0;
-}
-
-.stat-card small {
-  display: block;
-  margin-top: 8px;
-  color: var(--green);
-}
-
-.panel {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 22px;
-  overflow: hidden;
-}
-
-.panel-header {
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-
-.panel-header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-input, select {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: white;
-  outline: none;
-  color: var(--text);
-}
-
-input:focus, select:focus {
-  border-color: var(--gold);
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 750px;
-}
-
-th, td {
-  padding: 15px 17px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-
-th {
-  background: #f8f9fb;
-  color: #718096;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-
-.status {
-  display: inline-block;
-  padding: 5px 9px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: bold;
-}
-
-.active-status { background: #e2f5ed; color: #16845f; }
-.pending-status { background: #fff3d9; color: #a87513; }
-.delivered-status { background: #e7edfb; color: #4769b2; }
-
-.empty {
-  text-align: center;
-  color: var(--muted);
-  padding: 30px;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #101c3280;
-  z-index: 10;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-}
-
-.modal-box {
-  background: white;
-  width: 100%;
-  max-width: 520px;
-  border-radius: 12px;
-  padding: 25px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-box h2 { margin-top: 0; }
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 13px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 12px;
-  margin-bottom: 6px;
-  color: var(--muted);
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.secondary {
-  background: #edf0f5;
-  color: var(--text);
-}
-
-.page-section { display: none; }
-.page-section.active { display: block; }
-
-.footer {
-  color: var(--muted);
-  font-size: 11px;
-  text-align: center;
-  padding: 20px;
-}
-
-@media(max-width: 900px) {
-  .sidebar { width: 195px; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
-  .content { padding: 18px; }
-}
-
-@media(max-width: 600px) {
-  .layout { display: block; }
-  .sidebar {
-    width: 100%;
-    min-height: auto;
-    padding: 12px;
-  }
-  .brand { padding: 8px; margin-bottom: 10px; }
-  .nav-label { display: none; }
-  .nav-item {
-    display: inline-block;
-    width: auto;
-    padding: 9px;
-    font-size: 12px;
-  }
-  .topbar { padding: 0 15px; }
-  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat-card { padding: 14px; }
-  .stat-card h2 { font-size: 22px; }
-  .form-grid { grid-template-columns: 1fr; }
+@media(max-width:600px){
+.layout{display:block}
+.sidebar{width:100%;padding:12px}
+.brand{padding:8px;margin-bottom:10px}
+.nav-label{display:none}
+.nav-item{display:inline-block;width:auto;padding:9px;font-size:12px}
+.topbar{padding:12px 15px;flex-wrap:wrap}
+.stats{grid-template-columns:1fr 1fr;gap:10px}
+.form-grid,.address-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
+
+<div id="appContent">
 <div class="layout">
 
 <aside class="sidebar">
@@ -386,210 +107,529 @@ th {
   </div>
 
   <div class="nav-label">MAIN MENU</div>
-  <button class="nav-item active" onclick="showPage('dispatch',this)">▦ &nbsp; Dispatch</button>
-  <button class="nav-item" onclick="showPage('loads',this)">▤ &nbsp; Loads</button>
-  <button class="nav-item" onclick="showPage('drivers',this)">♙ &nbsp; Drivers</button>
-  <button class="nav-item" onclick="showPage('trucks',this)">▰ &nbsp; Trucks</button>
+  <button class="nav-item active" onclick="showPage('dispatch',this)">▦ Dispatch</button>
+  <button class="nav-item" onclick="showPage('loads',this)">▤ Loads</button>
+  <button class="nav-item" onclick="showPage('drivers',this)">♙ Drivers</button>
+  <button class="nav-item" onclick="showPage('trucks',this)">▰ Trucks</button>
+  <button class="nav-item" onclick="showPage('customers',this)">♧ Customers</button>
 
   <div class="nav-label">MANAGEMENT</div>
-  <button class="nav-item" onclick="showPage('ifta',this)">▧ &nbsp; IFTA</button>
-  <button class="nav-item" onclick="showPage('maintenance',this)">⚙ &nbsp; Maintenance</button>
-  <button class="nav-item" onclick="showPage('sales',this)">♧ &nbsp; Sales Manager</button>
-  <button class="nav-item" onclick="showPage('accounting',this)">＄ &nbsp; Accounting</button>
+  <button class="nav-item" onclick="showPage('ifta',this)">▧ IFTA</button>
+  <button class="nav-item" onclick="showPage('maintenance',this)">⚙ Maintenance</button>
+  <button class="nav-item" onclick="showPage('sales',this)">♧ Sales Manager</button>
+  <button class="nav-item" onclick="showPage('accounting',this)">＄ Accounting</button>
 
   <div class="nav-label">REPORTS & SYSTEM</div>
-  <button class="nav-item" onclick="showPage('reports',this)">▥ &nbsp; Reports</button>
-  <button class="nav-item" onclick="showPage('admin',this)">⚙ &nbsp; Admin / Settings</button>
+  <button class="nav-item" onclick="showPage('reports',this)">▥ Reports</button>
+  <button class="nav-item" onclick="showPage('admin',this)">⚙ Admin / Settings</button>
 </aside>
 
 <main class="main">
-  <header class="topbar">
-    <h3>Preserver Trans LLC</h3>
-    <div class="user">Dispatcher: <strong>Saim Ali</strong></div>
-  </header>
 
-  <div class="content">
-
-    <section id="dispatch" class="page-section active">
-      <div class="page-heading">
-        <div>
-          <h1>Dispatch Dashboard</h1>
-          <p>Manage your daily trucking operations</p>
-        </div>
-        <button class="btn btn-gold" onclick="openModal()">+ New Load</button>
-      </div>
-
-      <div class="stats">
-        <div class="stat-card">
-          <p>Active Loads</p>
-          <h2 id="activeCount">0</h2>
-          <small>Currently in transit</small>
-        </div>
-        <div class="stat-card">
-          <p>Pending Loads</p>
-          <h2 id="pendingCount">0</h2>
-          <small>Waiting for dispatch</small>
-        </div>
-        <div class="stat-card">
-          <p>Delivered Loads</p>
-          <h2 id="deliveredCount">0</h2>
-          <small>Completed deliveries</small>
-        </div>
-        <div class="stat-card">
-          <p>Total Loads</p>
-          <h2 id="totalCount">0</h2>
-          <small>All recorded loads</small>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h3>Dispatch Board</h3>
-          <div class="toolbar">
-            <input id="searchLoad" placeholder="Search loads..." oninput="renderLoads()">
-            <select id="statusFilter" onchange="renderLoads()">
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Delivered">Delivered</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Load #</th>
-                <th>Driver</th>
-                <th>Truck</th>
-                <th>Pickup</th>
-                <th>Delivery</th>
-                <th>Rate</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="loadTable">
-              <tr><td colspan="7" class="empty">No loads added yet. Click New Load to begin.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section id="loads" class="page-section">
-      <div class="page-heading"><div><h1>Load Management</h1><p>Manage pickup, delivery and load status</p></div>
-      <button class="btn btn-gold" onclick="openModal()">+ Add Load</button></div>
-      <div class="panel"><div class="panel-header"><h3>All Loads</h3></div>
-      <div class="table-wrap"><table><thead><tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr></thead><tbody id="allLoadTable"></tbody></table></div></div>
-    </section>
-
-    <section id="drivers" class="page-section">
-      <div class="page-heading"><div><h1>Drivers</h1><p>Driver information and availability</p></div></div>
-      <div class="panel"><div class="panel-header"><h3>Driver Directory</h3></div><div class="empty">Driver management module will be added in the next development step.</div></div>
-    </section>
-
-    <section id="trucks" class="page-section">
-      <div class="page-heading"><div><h1>Trucks</h1><p>Fleet and equipment management</p></div></div>
-      <div class="panel"><div class="panel-header"><h3>Truck Directory</h3></div><div class="empty">Truck management module will be added in the next development step.</div></div>
-    </section>
-
-    <section id="ifta" class="page-section"><div class="page-heading"><div><h1>IFTA</h1><p>Fuel and mileage records</p></div></div><div class="panel"><div class="empty">IFTA module coming soon.</div></div></section>
-    <section id="maintenance" class="page-section"><div class="page-heading"><div><h1>Maintenance</h1><p>Vehicle service and repair records</p></div></div><div class="panel"><div class="empty">Maintenance module coming soon.</div></div></section>
-    <section id="sales" class="page-section"><div class="page-heading"><div><h1>Sales Manager</h1><p>Broker and customer management</p></div></div><div class="panel"><div class="empty">Sales Manager module coming soon.</div></div></section>
-    <section id="accounting" class="page-section"><div class="page-heading"><div><h1>Accounting</h1><p>Revenue, expenses and payments</p></div></div><div class="panel"><div class="empty">Accounting module coming soon.</div></div></section>
-    <section id="reports" class="page-section"><div class="page-heading"><div><h1>Reports</h1><p>Business performance and operations</p></div></div><div class="panel"><div class="empty">Reports module coming soon.</div></div></section>
-    <section id="admin" class="page-section"><div class="page-heading"><div><h1>Admin / Settings</h1><p>Company and system settings</p></div></div><div class="panel"><div class="empty">Admin settings module coming soon.</div></div></section>
-
+<header class="topbar">
+  <h3>Preserver Trans LLC</h3>
+  <div class="user">
+    <span id="loggedInName">Loading...</span>
+    &nbsp; | &nbsp;
+    <button class="btn btn-red" onclick="logout()">Logout</button>
   </div>
-  <div class="footer">© 2026 Preserver Trans LLC · Dispatch Management System</div>
+</header>
+
+<div class="content">
+
+<section id="dispatch" class="page-section active">
+  <div class="page-heading">
+    <div>
+      <h1>Dispatch Dashboard</h1>
+      <p>Manage your daily trucking operations</p>
+    </div>
+    <button class="btn btn-gold" onclick="openModal('loadModal')">+ New Load</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><p>Active Loads</p><h2 id="activeCount">0</h2></div>
+    <div class="stat-card"><p>Pending Loads</p><h2 id="pendingCount">0</h2></div>
+    <div class="stat-card"><p>Delivered Loads</p><h2 id="deliveredCount">0</h2></div>
+    <div class="stat-card"><p>Total Loads</p><h2 id="totalCount">0</h2></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Dispatch Board</h3>
+      <div style="display:flex;gap:10px">
+        <input id="searchLoad" placeholder="Search loads..." oninput="renderLoads()">
+        <select id="statusFilter" onchange="renderLoads()">
+          <option>All</option><option>Active</option>
+          <option>Pending</option><option>Delivered</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr>
+        </thead>
+        <tbody id="loadTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="loads" class="page-section">
+  <div class="page-heading">
+    <div><h1>Load Management</h1><p>Manage pickup, delivery and load status</p></div>
+    <button class="btn btn-gold" onclick="openModal('loadModal')">+ Add Load</button>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><h3>All Loads</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr></thead>
+        <tbody id="allLoadTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="drivers" class="page-section">
+  <div class="page-heading">
+    <div><h1>Drivers</h1><p>Driver information and address management</p></div>
+    <button class="btn btn-gold" onclick="openModal('driverModal')">+ Add Driver</button>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><h3>Driver Directory</h3></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Name</th><th>Phone</th><th>Truck</th><th>Address</th></tr></thead>
+      <tbody id="driverTable"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<section id="customers" class="page-section">
+  <div class="page-heading">
+    <div><h1>Customers</h1><p>Customer and broker address management</p></div>
+    <button class="btn btn-gold" onclick="openModal('customerModal')">+ Add Customer</button>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><h3>Customer Directory</h3></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Address</th></tr></thead>
+      <tbody id="customerTable"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<section id="trucks" class="page-section">
+  <div class="page-heading"><div><h1>Trucks</h1><p>Fleet and equipment management</p></div></div>
+  <div class="panel"><div class="empty">Truck management module is ready for development.</div></div>
+</section>
+
+<section id="ifta" class="page-section">
+  <div class="page-heading"><div><h1>IFTA</h1><p>Fuel and mileage records</p></div></div>
+  <div class="panel"><div class="empty">IFTA module is ready for development.</div></div>
+</section>
+
+<section id="maintenance" class="page-section">
+  <div class="page-heading"><div><h1>Maintenance</h1><p>Vehicle service and repair records</p></div></div>
+  <div class="panel"><div class="empty">Maintenance module is ready for development.</div></div>
+</section>
+
+<section id="sales" class="page-section">
+  <div class="page-heading"><div><h1>Sales Manager</h1><p>Broker and customer management</p></div></div>
+  <div class="panel"><div class="empty">Sales Manager module is ready for development.</div></div>
+</section>
+
+<section id="accounting" class="page-section">
+  <div class="page-heading"><div><h1>Accounting</h1><p>Revenue, expenses and payments</p></div></div>
+  <div class="panel"><div class="empty">Accounting module is ready for development.</div></div>
+</section>
+
+<section id="reports" class="page-section">
+  <div class="page-heading"><div><h1>Reports</h1><p>Business performance and operations</p></div></div>
+  <div class="panel"><div class="empty">Reports module is ready for development.</div></div>
+</section>
+
+<section id="admin" class="page-section">
+  <div class="page-heading"><div><h1>Admin / Settings</h1><p>Company and system settings</p></div></div>
+  <div class="panel"><div class="empty">Admin settings module is ready for development.</div></div>
+</section>
+
+</div>
+<div class="footer">© 2026 Preserver Trans LLC · Dispatch Management System</div>
 </main>
 </div>
+</div>
 
+<!-- ADD LOAD MODAL -->
 <div class="modal" id="loadModal">
-  <div class="modal-box">
-    <h2>Add New Load</h2>
-    <form id="loadForm">
-      <div class="form-grid">
-        <div class="form-group"><label>Load Number</label><input id="loadNo" required placeholder="e.g. 10001"></div>
-        <div class="form-group"><label>Driver Name</label><input id="driver" required placeholder="Driver name"></div>
-        <div class="form-group"><label>Truck Number</label><input id="truck" required placeholder="Truck number"></div>
-        <div class="form-group"><label>Broker / Company</label><input id="broker" placeholder="Broker name"></div>
-        <div class="form-group"><label>Pickup Location</label><input id="pickup" required placeholder="City, State"></div>
-        <div class="form-group"><label>Delivery Location</label><input id="delivery" required placeholder="City, State"></div>
-        <div class="form-group"><label>Rate ($)</label><input id="rate" type="number" min="0" required placeholder="0"></div>
-        <div class="form-group"><label>Load Status</label>
-          <select id="loadStatus">
-            <option>Pending</option>
-            <option>Active</option>
-            <option>Delivered</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-gold">Save Load</button>
-      </div>
-    </form>
+<div class="modal-box">
+<h2>Add New Load</h2>
+<form id="loadForm">
+
+<div class="form-grid">
+  <div class="form-group"><label>Load Number</label><input id="loadNo" required></div>
+  <div class="form-group"><label>Driver Name</label><input id="loadDriver" required></div>
+  <div class="form-group"><label>Truck Number</label><input id="loadTruck" required></div>
+  <div class="form-group"><label>Broker / Company</label><input id="loadBroker"></div>
+  <div class="form-group"><label>Rate ($)</label><input id="loadRate" type="number" min="0" required></div>
+  <div class="form-group"><label>Status</label>
+    <select id="loadStatus"><option>Pending</option><option>Active</option><option>Delivered</option></select>
   </div>
+</div>
+
+<div class="address-box">
+<h4>Pickup Address</h4>
+<div class="form-group"><label>Street Address</label><input id="pickupStreet" placeholder="Street address"></div>
+<div class="address-grid">
+  <div class="form-group"><label>Country</label><select id="pickupCountry" class="country-select"><option value="">Select Country</option></select></div>
+  <div class="form-group"><label>State / Province</label><select id="pickupState" disabled><option value="">Select State</option></select></div>
+  <div class="form-group"><label>City</label><select id="pickupCity" disabled><option value="">Select City</option></select></div>
+  <div class="form-group"><label>ZIP / Postal Code</label><input id="pickupZip" placeholder="ZIP / Postal Code"></div>
+</div>
+</div>
+
+<div class="address-box">
+<h4>Delivery Address</h4>
+<div class="form-group"><label>Street Address</label><input id="deliveryStreet" placeholder="Street address"></div>
+<div class="address-grid">
+  <div class="form-group"><label>Country</label><select id="deliveryCountry" class="country-select"><option value="">Select Country</option></select></div>
+  <div class="form-group"><label>State / Province</label><select id="deliveryState" disabled><option value="">Select State</option></select></div>
+  <div class="form-group"><label>City</label><select id="deliveryCity" disabled><option value="">Select City</option></select></div>
+  <div class="form-group"><label>ZIP / Postal Code</label><input id="deliveryZip" placeholder="ZIP / Postal Code"></div>
+</div>
+</div>
+
+<div class="modal-actions">
+<button type="button" class="btn secondary" onclick="closeModal('loadModal')">Cancel</button>
+<button type="submit" class="btn btn-gold">Save Load</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ADD DRIVER MODAL -->
+<div class="modal" id="driverModal">
+<div class="modal-box">
+<h2>Add Driver</h2>
+<form id="driverForm">
+<div class="form-grid">
+  <div class="form-group"><label>Driver Name</label><input id="driverName" required></div>
+  <div class="form-group"><label>Phone Number</label><input id="driverPhone"></div>
+  <div class="form-group"><label>Truck Number</label><input id="driverTruck"></div>
+</div>
+<div class="address-box">
+<h4>Driver Address</h4>
+<div class="form-group"><label>Street Address</label><input id="driverStreet"></div>
+<div class="address-grid">
+  <div class="form-group"><label>Country</label><select id="driverCountry" class="country-select"><option value="">Select Country</option></select></div>
+  <div class="form-group"><label>State / Province</label><select id="driverState" disabled><option value="">Select State</option></select></div>
+  <div class="form-group"><label>City</label><select id="driverCity" disabled><option value="">Select City</option></select></div>
+  <div class="form-group"><label>ZIP / Postal Code</label><input id="driverZip"></div>
+</div>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn secondary" onclick="closeModal('driverModal')">Cancel</button>
+<button type="submit" class="btn btn-gold">Save Driver</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="modal" id="customerModal">
+<div class="modal-box">
+<h2>Add Customer</h2>
+<form id="customerForm">
+<div class="form-grid">
+  <div class="form-group"><label>Company Name</label><input id="customerCompany" required></div>
+  <div class="form-group"><label>Contact Person</label><input id="customerContact"></div>
+  <div class="form-group"><label>Phone Number</label><input id="customerPhone"></div>
+  <div class="form-group"><label>Email</label><input id="customerEmail" type="email"></div>
+</div>
+<div class="address-box">
+<h4>Customer Address</h4>
+<div class="form-group"><label>Street Address</label><input id="customerStreet"></div>
+<div class="address-grid">
+  <div class="form-group"><label>Country</label><select id="customerCountry" class="country-select"><option value="">Select Country</option></select></div>
+  <div class="form-group"><label>State / Province</label><select id="customerState" disabled><option value="">Select State</option></select></div>
+  <div class="form-group"><label>City</label><select id="customerCity" disabled><option value="">Select City</option></select></div>
+  <div class="form-group"><label>ZIP / Postal Code</label><input id="customerZip"></div>
+</div>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn secondary" onclick="closeModal('customerModal')">Cancel</button>
+<button type="submit" class="btn btn-gold">Save Customer</button>
+</div>
+</form>
+</div>
 </div>
 
 <script>
-let loads = [];
+// ------------------------------------
+// AUTHENTICATION CHECK
+// ------------------------------------
 
-function showPage(page, button) {
-  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-  document.getElementById(page).classList.add('active');
+async function checkLogin(){
+  try {
+    if(!window.supabaseClient){
+      throw new Error("Supabase configuration not found.");
+    }
 
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  button.classList.add('active');
+    const {data:{session},error} =
+      await supabaseClient.auth.getSession();
+
+    if(error || !session){
+      window.location.href="login.html";
+      return;
+    }
+
+    const {data:profile,error:profileError} =
+      await supabaseClient
+        .from("profiles")
+        .select("username,full_name,role,is_active")
+        .eq("id",session.user.id)
+        .single();
+
+    if(profileError || !profile || profile.is_active !== true){
+      await supabaseClient.auth.signOut();
+      window.location.href="login.html";
+      return;
+    }
+
+    document.getElementById("loggedInName").textContent =
+      (profile.full_name || profile.username) + " (" + profile.role + ")";
+
+    document.getElementById("appContent").style.display="block";
+
+  } catch(error){
+    console.error(error);
+    alert("Login verification failed. Please sign in again.");
+    window.location.href="login.html";
+  }
 }
 
-function openModal() {
-  document.getElementById('loadModal').style.display = 'flex';
+async function logout(){
+  if(!confirm("Are you sure you want to logout?")) return;
+  await supabaseClient.auth.signOut();
+  window.location.href="login.html";
 }
 
-function closeModal() {
-  document.getElementById('loadModal').style.display = 'none';
+// ------------------------------------
+// NAVIGATION
+// ------------------------------------
+
+function showPage(page,button){
+  document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
 }
 
-document.getElementById('loadForm').addEventListener('submit', function(e) {
+function openModal(id){
+  document.getElementById(id).style.display="flex";
+}
+
+function closeModal(id){
+  document.getElementById(id).style.display="none";
+}
+
+// ------------------------------------
+// GLOBAL COUNTRY / STATE / CITY DATA
+// ------------------------------------
+
+const API = "https://countriesnow.space/api/v0.1/countries";
+
+async function loadCountries(){
+  try{
+    const response = await fetch(API);
+    const result = await response.json();
+
+    if(!result.data) throw new Error("Country list unavailable");
+
+    const countries = result.data.map(x=>x.country).sort();
+
+    document.querySelectorAll(".country-select").forEach(select=>{
+      select.innerHTML='<option value="">Select Country</option>';
+
+      countries.forEach(country=>{
+        const option=document.createElement("option");
+        option.value=country;
+        option.textContent=country;
+        select.appendChild(option);
+      });
+    });
+
+  }catch(error){
+    console.error("Countries loading error:",error);
+    alert("Countries could not load. Please refresh the page.");
+  }
+}
+
+// Reusable cascading dropdowns
+function setupAddress(prefix){
+
+  const country=document.getElementById(prefix+"Country");
+  const state=document.getElementById(prefix+"State");
+  const city=document.getElementById(prefix+"City");
+
+  country.addEventListener("change",async()=>{
+    state.innerHTML='<option value="">Loading states...</option>';
+    city.innerHTML='<option value="">Select City</option>';
+    state.disabled=true;
+    city.disabled=true;
+
+    if(!country.value){
+      state.innerHTML='<option value="">Select State</option>';
+      return;
+    }
+
+    try{
+      const response=await fetch(API+"/states",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({country:country.value})
+      });
+
+      const result=await response.json();
+
+      state.innerHTML='<option value="">Select State</option>';
+
+      if(result.data && result.data.states){
+        result.data.states.forEach(item=>{
+          const option=document.createElement("option");
+          option.value=item.name;
+          option.textContent=item.name;
+          state.appendChild(option);
+        });
+      }
+
+      state.disabled=false;
+
+    }catch(error){
+      state.innerHTML='<option value="">States unavailable</option>';
+      console.error(error);
+    }
+  });
+
+  state.addEventListener("change",async()=>{
+    city.innerHTML='<option value="">Loading cities...</option>';
+    city.disabled=true;
+
+    if(!state.value){
+      city.innerHTML='<option value="">Select City</option>';
+      return;
+    }
+
+    try{
+      const response=await fetch(API+"/state/cities",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          country:country.value,
+          state:state.value
+        })
+      });
+
+      const result=await response.json();
+
+      city.innerHTML='<option value="">Select City</option>';
+
+      if(result.data){
+        result.data.sort().forEach(cityName=>{
+          const option=document.createElement("option");
+          option.value=cityName;
+          option.textContent=cityName;
+          city.appendChild(option);
+        });
+      }
+
+      city.disabled=false;
+
+    }catch(error){
+      city.innerHTML='<option value="">Cities unavailable</option>';
+      console.error(error);
+    }
+  });
+}
+
+function setupAllAddresses(){
+  [
+    "pickup","delivery","driver","customer"
+  ].forEach(setupAddress);
+}
+
+function getAddress(prefix){
+  const street=document.getElementById(prefix+"Street").value.trim();
+  const country=document.getElementById(prefix+"Country").value;
+  const state=document.getElementById(prefix+"State").value;
+  const city=document.getElementById(prefix+"City").value;
+  const zip=document.getElementById(prefix+"Zip").value.trim();
+
+  return [street,city,state,zip,country].filter(Boolean).join(", ");
+}
+
+// ------------------------------------
+// LOAD MANAGEMENT
+// ------------------------------------
+
+let loads=[];
+let drivers=[];
+let customers=[];
+
+document.getElementById("loadForm").addEventListener("submit",function(e){
   e.preventDefault();
 
-  const load = {
-    number: document.getElementById('loadNo').value.trim(),
-    driver: document.getElementById('driver').value.trim(),
-    truck: document.getElementById('truck').value.trim(),
-    broker: document.getElementById('broker').value.trim(),
-    pickup: document.getElementById('pickup').value.trim(),
-    delivery: document.getElementById('delivery').value.trim(),
-    rate: Number(document.getElementById('rate').value),
-    status: document.getElementById('loadStatus').value
-  };
+  const number=document.getElementById("loadNo").value.trim();
 
-  if (loads.some(item => item.number === load.number)) {
-    alert('This load number already exists.');
+  if(loads.some(x=>x.number===number)){
+    alert("This load number already exists.");
     return;
   }
 
-  loads.push(load);
+  const pickup=getAddress("pickup");
+  const delivery=getAddress("delivery");
+
+  if(!document.getElementById("pickupCountry").value ||
+     !document.getElementById("pickupCity").value){
+    alert("Please select Pickup Country and City.");
+    return;
+  }
+
+  if(!document.getElementById("deliveryCountry").value ||
+     !document.getElementById("deliveryCity").value){
+    alert("Please select Delivery Country and City.");
+    return;
+  }
+
+  loads.push({
+    number,
+    driver:document.getElementById("loadDriver").value.trim(),
+    truck:document.getElementById("loadTruck").value.trim(),
+    broker:document.getElementById("loadBroker").value.trim(),
+    pickup,
+    delivery,
+    rate:Number(document.getElementById("loadRate").value),
+    status:document.getElementById("loadStatus").value
+  });
+
   this.reset();
-  closeModal();
+  closeModal("loadModal");
   renderLoads();
 });
 
-function renderLoads() {
-  const search = (document.getElementById('searchLoad')?.value || '').toLowerCase();
-  const filter = document.getElementById('statusFilter')?.value || 'All';
+function renderLoads(){
+  const search=(document.getElementById("searchLoad")?.value||"").toLowerCase();
+  const filter=document.getElementById("statusFilter")?.value||"All";
 
-  const filtered = loads.filter(load => {
-    const matchesSearch = Object.values(load).join(' ').toLowerCase().includes(search);
-    const matchesStatus = filter === 'All' || load.status === filter;
-    return matchesSearch && matchesStatus;
+  const filtered=loads.filter(load=>{
+    const match=Object.values(load).join(" ").toLowerCase().includes(search);
+    return match && (filter==="All" || load.status===filter);
   });
 
-  const rows = filtered.map(load => {
-    let statusClass = load.status === 'Active' ? 'active-status' :
-      load.status === 'Delivered' ? 'delivered-status' : 'pending-status';
+  const rows=filtered.map(load=>{
+    const statusClass=load.status==="Active"?"active-status":
+      load.status==="Delivered"?"delivered-status":"pending-status";
 
     return `<tr>
       <td><strong>${escapeHTML(load.number)}</strong></td>
@@ -597,29 +637,114 @@ function renderLoads() {
       <td>${escapeHTML(load.truck)}</td>
       <td>${escapeHTML(load.pickup)}</td>
       <td>${escapeHTML(load.delivery)}</td>
-      <td>$${load.rate.toLocaleString('en-US')}</td>
-      <td><span class="status ${statusClass}">${load.status}</span></td>
+      <td>$${load.rate.toLocaleString("en-US")}</td>
+      <td><span class="status ${statusClass}">${escapeHTML(load.status)}</span></td>
     </tr>`;
-  }).join('');
+  }).join("");
 
-  const emptyRow = '<tr><td colspan="7" class="empty">No matching loads found.</td></tr>';
-  document.getElementById('loadTable').innerHTML = rows || emptyRow;
-  document.getElementById('allLoadTable').innerHTML = rows || emptyRow;
+  const empty='<tr><td colspan="7" class="empty">No loads found.</td></tr>';
 
-  document.getElementById('activeCount').textContent = loads.filter(x => x.status === 'Active').length;
-  document.getElementById('pendingCount').textContent = loads.filter(x => x.status === 'Pending').length;
-  document.getElementById('deliveredCount').textContent = loads.filter(x => x.status === 'Delivered').length;
-  document.getElementById('totalCount').textContent = loads.length;
+  document.getElementById("loadTable").innerHTML=rows||empty;
+  document.getElementById("allLoadTable").innerHTML=rows||empty;
+
+  document.getElementById("activeCount").textContent=
+    loads.filter(x=>x.status==="Active").length;
+
+  document.getElementById("pendingCount").textContent=
+    loads.filter(x=>x.status==="Pending").length;
+
+  document.getElementById("deliveredCount").textContent=
+    loads.filter(x=>x.status==="Delivered").length;
+
+  document.getElementById("totalCount").textContent=loads.length;
 }
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;',
-    '"': '&quot;', "'": '&#39;'
+// ------------------------------------
+// DRIVER MANAGEMENT
+// ------------------------------------
+
+document.getElementById("driverForm").addEventListener("submit",function(e){
+  e.preventDefault();
+
+  drivers.push({
+    name:document.getElementById("driverName").value.trim(),
+    phone:document.getElementById("driverPhone").value.trim(),
+    truck:document.getElementById("driverTruck").value.trim(),
+    address:getAddress("driver")
+  });
+
+  renderDrivers();
+  this.reset();
+  closeModal("driverModal");
+});
+
+function renderDrivers(){
+  document.getElementById("driverTable").innerHTML=drivers.map(d=>`
+    <tr>
+      <td>${escapeHTML(d.name)}</td>
+      <td>${escapeHTML(d.phone)}</td>
+      <td>${escapeHTML(d.truck)}</td>
+      <td>${escapeHTML(d.address)}</td>
+    </tr>
+  `).join("") || '<tr><td colspan="4" class="empty">No drivers added.</td></tr>';
+}
+
+// ------------------------------------
+// CUSTOMER MANAGEMENT
+// ------------------------------------
+
+document.getElementById("customerForm").addEventListener("submit",function(e){
+  e.preventDefault();
+
+  customers.push({
+    company:document.getElementById("customerCompany").value.trim(),
+    contact:document.getElementById("customerContact").value.trim(),
+    phone:document.getElementById("customerPhone").value.trim(),
+    email:document.getElementById("customerEmail").value.trim(),
+    address:getAddress("customer")
+  });
+
+  renderCustomers();
+  this.reset();
+  closeModal("customerModal");
+});
+
+function renderCustomers(){
+  document.getElementById("customerTable").innerHTML=customers.map(c=>`
+    <tr>
+      <td>${escapeHTML(c.company)}</td>
+      <td>${escapeHTML(c.contact)}</td>
+      <td>${escapeHTML(c.phone)}</td>
+      <td>${escapeHTML(c.address)}</td>
+    </tr>
+  `).join("") || '<tr><td colspan="4" class="empty">No customers added.</td></tr>';
+}
+
+// ------------------------------------
+// SECURITY / HTML OUTPUT
+// ------------------------------------
+
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
   })[char]);
 }
 
+// ------------------------------------
+// START APPLICATION
+// ------------------------------------
+
+setupAllAddresses();
+loadCountries();
 renderLoads();
+renderDrivers();
+renderCustomers();
+checkLogin();
+
 </script>
 </body>
 </html>
