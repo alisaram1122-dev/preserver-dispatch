@@ -188,8 +188,16 @@ input:focus,select:focus{border-color:var(--gold)}
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr>
-        </thead>
+          <tr>
+  <th>Load #</th>
+  <th>Driver</th>
+  <th>Truck</th>
+  <th>Pickup</th>
+  <th>Delivery</th>
+  <th>Rate</th>
+  <th>Status</th>
+  <th>Tracking</th>
+</tr>
         <tbody id="loadTable"></tbody>
       </table>
     </div>
@@ -205,7 +213,18 @@ input:focus,select:focus{border-color:var(--gold)}
     <div class="panel-header"><h3>All Loads</h3></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Load #</th><th>Driver</th><th>Truck</th><th>Pickup</th><th>Delivery</th><th>Rate</th><th>Status</th></tr></thead>
+        <thead>
+  <tr>
+    <th>Load #</th>
+    <th>Driver</th>
+    <th>Truck</th>
+    <th>Pickup</th>
+    <th>Delivery</th>
+    <th>Rate</th>
+    <th>Status</th>
+    <th>Tracking</th>
+  </tr>
+</thead>
         <tbody id="allLoadTable"></tbody>
       </table>
     </div>
@@ -673,6 +692,7 @@ let loads=[];
 let drivers=[];
 let customers=[];
 
+
 document.getElementById("loadForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
@@ -717,32 +737,6 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
       .single();
 
     if(error) throw error;
-    // CREATE DRIVER TRACKING LINK
-if (String(data.status || "").toLowerCase().includes("dispatch")) {
-
-  const { data: trackingSession, error: trackingError } =
-    await supabaseClient
-      .from("tracking_sessions")
-      .insert({
-        load_number: data.load_number,
-        driver_name: data.driver,
-        truck_number: data.truck
-      })
-      .select()
-      .single();
-
-  if (trackingError) throw trackingError;
-
-  const trackingLink = new URL("tracking.html", window.location.href);
-  trackingLink.searchParams.set("token", trackingSession.token);
-
-  try {
-    await navigator.clipboard.writeText(trackingLink.href);
-    alert("Driver tracking link copied!\n\n" + trackingLink.href);
-  } catch (e) {
-    prompt("Copy this driver tracking link:", trackingLink.href);
-  }
-}
 
     loads.push({
       number: data.load_number,
@@ -759,13 +753,45 @@ if (String(data.status || "").toLowerCase().includes("dispatch")) {
     this.reset();
     closeModal("loadModal");
 
-    alert("Load saved successfully!");
+    // CREATE DRIVER TRACKING LINK
+    if(String(data.status || "").toLowerCase().includes("dispatch")) {
+
+      const { data: trackingSession, error: trackingError } =
+        await supabaseClient
+          .from("tracking_sessions")
+          .insert({
+            load_number: data.load_number,
+            driver_name: data.driver,
+            truck_number: data.truck
+          })
+          .select()
+          .single();
+
+      if(trackingError) {
+        console.error("Tracking link error:", trackingError);
+        alert("Load saved, but tracking link could not be created: " + trackingError.message);
+      } else {
+        const trackingLink = new URL("tracking.html", window.location.href);
+        trackingLink.searchParams.set("token", trackingSession.token);
+
+        try {
+          await navigator.clipboard.writeText(trackingLink.href);
+          alert("Load saved successfully!\n\nDriver tracking link copied. Send it to your driver on WhatsApp.");
+        } catch(e) {
+          prompt("Copy this driver tracking link:", trackingLink.href);
+        }
+      }
+
+    } else {
+      alert("Load saved successfully!");
+    }
 
   } catch(error) {
     console.error("Load saving error:", error);
     alert("Load could not be saved: " + error.message);
   }
 });
+
   // ------------------------------------
 // LOAD MANAGEMENT
 // ------------------------------------
@@ -798,16 +824,65 @@ async function loadSavedLoads(){
     }));
 
     renderLoads();
-    // Show dispatched trucks on map
+    // Show active and dispatched trucks on map
 loads
-  .filter(load =>
-    String(load.status || "").toLowerCase().includes("dispatch")
-  )
+  .filter(load => {
+    const status = String(load.status || "").toLowerCase();
+
+    return status === "active" || status.includes("dispatch");
+  })
   .forEach(load => showTruckRoute(load));
 
   } catch(error) {
     console.error("Load loading error:", error);
     alert("Could not load saved loads: " + error.message);
+  }
+}
+
+
+async function createLoadTrackingLink(loadNumber) {
+  try {
+    const load = loads.find(x => x.number === loadNumber);
+
+    if (!load) {
+      alert("Load not found.");
+      return;
+    }
+
+    let { data: session, error } = await supabaseClient
+      .from("tracking_sessions")
+      .select("*")
+      .eq("load_number", loadNumber)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!session) {
+      const result = await supabaseClient
+        .from("tracking_sessions")
+        .insert({
+          load_number: load.number,
+          driver_name: load.driver,
+          truck_number: load.truck
+        })
+        .select()
+        .single();
+
+      if (result.error) throw result.error;
+      session = result.data;
+    }
+
+    const trackingLink = new URL("tracking.html", window.location.href);
+    trackingLink.searchParams.set("token", session.token);
+
+    await navigator.clipboard.writeText(trackingLink.href);
+
+    alert("Tracking link copied!\nSend this link to your driver on WhatsApp.");
+
+  } catch(error) {
+    console.error("Tracking link error:", error);
+    alert("Could not create tracking link: " + error.message);
   }
 }
 
@@ -830,12 +905,17 @@ function renderLoads(){
       <td>${escapeHTML(load.truck)}</td>
       <td>${escapeHTML(load.pickup)}</td>
       <td>${escapeHTML(load.delivery)}</td>
-      <td>$${load.rate.toLocaleString("en-US")}</td>
+      <td>$${Number(load.rate).toLocaleString("en-US")}</td>
       <td><span class="status ${statusClass}">${escapeHTML(load.status)}</span></td>
+      <td>
+        <button type="button" onclick="createLoadTrackingLink('${escapeHTML(load.number)}')">
+          Track Truck
+        </button>
+      </td>
     </tr>`;
   }).join("");
 
-  const empty='<tr><td colspan="7" class="empty">No loads found.</td></tr>';
+  const empty='<tr><td colspan="8" class="empty">No loads found.</td></tr>';
 
   document.getElementById("loadTable").innerHTML=rows||empty;
   document.getElementById("allLoadTable").innerHTML=rows||empty;
@@ -851,6 +931,7 @@ function renderLoads(){
 
   document.getElementById("totalCount").textContent=loads.length;
 }
+
 
 // ------------------------------------
 // DRIVER MANAGEMENT
