@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preserver Trans - Driver Tracking</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101010;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .tracking-card {
+      background: #202020;
+      padding: 30px;
+      border-radius: 15px;
+      width: 85%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid #b58a25;
+    }
+
+    h2 { color: #d4af37; }
+
+    button {
+      background: #d4af37;
+      color: black;
+      border: none;
+      padding: 14px 25px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    #status {
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="tracking-card">
+    <h2>Preserver Trans LLC</h2>
+    <h3>Driver Live Tracking</h3>
+    <p>Please allow location access to start truck tracking.</p>
+
+    <button id="startTracking">Accept & Start Tracking</button>
+
+    <div id="status">Waiting for driver...</div>
+  </div>
+
+  <script>
+    const statusBox = document.getElementById("status");
+    const startButton = document.getElementById("startTracking");
+
+    const trackingToken = new URLSearchParams(
+      window.location.search
+    ).get("token");
+
+    let watchId = null;
+
+    startButton.addEventListener("click", function () {
+      if (!trackingToken) {
+        statusBox.textContent = "Invalid tracking link.";
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        statusBox.textContent = "GPS is not supported by this device.";
+        return;
+      }
+
+      startButton.disabled = true;
+      statusBox.textContent = "Requesting GPS permission...";
+
+      watchId = navigator.geolocation.watchPosition(
+        async function (position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          const { error } = await supabaseClient.rpc(
+            "update_driver_location",
+            {
+              p_token: trackingToken,
+              p_lat: latitude,
+              p_lng: longitude
+            }
+          );
+
+          if (error) {
+            statusBox.textContent =
+              "Tracking setup pending. Please contact dispatch.";
+            console.error(error);
+            return;
+          }
+
+          statusBox.textContent = "GPS tracking is active.";
+        },
+
+        function (error) {
+          statusBox.textContent =
+            "Location permission required. Please allow GPS access.";
+          startButton.disabled = false;
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 20000
+        }
+      );
+    });
+  </script>
+</body>
+</html>
