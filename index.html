@@ -1164,8 +1164,9 @@ async function showTruckRoute(load) {
     console.error("Truck route error:", error);
   }
 }
-
+console.log("BEFORE MAP INIT");
 initializeTruckMap();
+  console.log("AFTER MAP INIT");
   // ------------------------------------
 // LIVE GPS LOCATION RECEIVER
 // ------------------------------------
