@@ -131,6 +131,7 @@ input:focus,select:focus{border-color:var(--gold)}
   <button class="nav-item" onclick="showPage('loads',this)">▤ Loads</button>
   <button class="nav-item" onclick="showPage('drivers',this)">♙ Drivers</button>
   <button class="nav-item" onclick="showPage('trucks',this)">▰ Trucks</button>
+  <button class="nav-item" onclick="showPage('tracking',this)">🌍 Live Tracking</button>
   <button class="nav-item" onclick="showPage('customers',this)">♧ Customers</button>
 
   <div class="nav-label">MANAGEMENT</div>
@@ -156,12 +157,19 @@ input:focus,select:focus{border-color:var(--gold)}
 </header>
 
 <div class="content">
-  <!-- LIVE TRUCK TRACKING MAP -->
-<div class="card">
-  <h2>🌍 Live Truck Tracking</h2>
-  <p>Track all dispatched trucks on the map.</p>
-  <div id="liveTruckMap"></div>
-</div>
+<!-- LIVE TRUCK TRACKING PAGE -->
+<section id="tracking" class="page-section">
+  <div class="page-heading">
+    <div>
+      <h1>Live Truck Tracking</h1>
+      <p>Track all dispatched trucks on the map.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="liveTruckMap"></div>
+  </div>
+</section>
 
 <section id="dispatch" class="page-section active">
   <div class="page-heading">
@@ -470,18 +478,21 @@ async function logout(){
 
 function showPage(page,button){
   document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
+
   document.getElementById(page).classList.add("active");
 
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+
   button.classList.add("active");
-}
 
-function openModal(id){
-  document.getElementById(id).style.display="flex";
-}
-
-function closeModal(id){
-  document.getElementById(id).style.display="none";
+  // Fix map size when Live Tracking page opens
+  if(page === "tracking"){
+    setTimeout(() => {
+      if(liveTruckMap){
+        liveTruckMap.invalidateSize();
+      }
+    }, 200);
+  }
 }
 
 
