@@ -18,338 +18,30 @@
 </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preserver Trans LLC | Management System</title>
+<title>Preserver Trans LLC | Dispatch Management System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 
 <style>
-
-  :root {
-  --navy:#0b1424;
-  --navy2:#14243d;
-  --gold:#d9ad55;
-  --bg:#eef1f6;
-  --white:#ffffff;
-  --text:#263449;
-  --muted:#7c899c;
-  --border:#e2e7ef;
-  --green:#15966b;
-}
-
+:root{--navy:#0b1424;--navy2:#14243d;--gold:#d9ad55;--bg:#eef1f6;--white:#fff;--text:#263449;--muted:#7c899c;--border:#e2e7ef;--green:#15966b;--shadow:0 8px 24px #101c3210}
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
 .layout{display:flex;min-height:100vh}
-
-.sidebar{
-  width:255px;
-  background:linear-gradient(180deg,#0b1424,#172943);
-  color:white;
-  padding:24px 15px;
-  flex-shrink:0;
-  box-shadow:4px 0 18px #101c3215;
-}
-
-.brand{
-  padding:10px 12px 25px;
-  border-bottom:1px solid #ffffff20;
-  margin-bottom:22px;
-}
-
-.brand h2{
-  margin:0;
-  font-size:22px;
-  letter-spacing:1px;
-}
-
-.brand span{color:var(--gold)}
-.brand small{
-  display:block;
-  color:#aab5c6;
-  margin-top:8px;
-  letter-spacing:2px;
-}
-
-.nav-label{
-  color:#8998ad;
-  font-size:10px;
-  letter-spacing:1.7px;
-  padding:13px;
-}
-
-.nav-item{
-  display:block;
-  width:100%;
-  border:0;
-  background:transparent;
-  color:#c5cede;
-  text-align:left;
-  padding:13px 15px;
-  margin:4px 0;
-  border-radius:9px;
-  cursor:pointer;
-  font-size:14px;
-  transition:.2s;
-}
-
-.nav-item:hover,.nav-item.active{
-  background:#263b59;
-  color:white;
-}
-
-.nav-item.active{
-  border-left:4px solid var(--gold);
-}
-
-.main{flex:1;min-width:0}
-
-.topbar{
-  min-height:75px;
-  background:white;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:15px 30px;
-  gap:15px;
-  box-shadow:0 2px 10px #101c3208;
-}
-
-.topbar h3{margin:0;font-size:19px}
-.user{font-size:13px;color:var(--muted)}
-
-.content{padding:30px}
-.page-section{display:none}
-.page-section.active{display:block}
-
-.page-heading{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-  flex-wrap:wrap;
-  margin-bottom:25px;
-}
-
-.page-heading h1{margin:0 0 7px;font-size:27px}
-.page-heading p{margin:0;color:var(--muted);font-size:13px}
-
-.btn{
-  background:var(--navy2);
-  color:white;
-  border:0;
-  border-radius:8px;
-  padding:12px 19px;
-  cursor:pointer;
-  font-weight:600;
-  transition:.2s;
-}
-
-.btn:hover{background:#263d5e;transform:translateY(-1px)}
-.btn-gold{background:var(--gold);color:#17243a}
-.btn-red{background:#c0392b;color:white}
-
-.btn-whatsapp{
-  background:#168b55;
-  color:white;
-  border:0;
-  border-radius:7px;
-  padding:9px 12px;
-  cursor:pointer;
-  font-weight:600;
-  white-space:nowrap;
-}
-
-.dispatch-account,.driver-assignment-note{
-  font-size:12px;
-  color:#64748b;
-}
-
-.dispatch-account{
-  background:#f8fafc;
-  border:1px solid var(--border);
-  padding:8px 11px;
-  border-radius:7px;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:18px;
-  margin-bottom:27px;
-}
-
-.stat-card,.panel{
-  background:white;
-  border:1px solid var(--border);
-  border-radius:13px;
-  box-shadow:0 4px 15px #14243d08;
-}
-
-.stat-card{
-  padding:23px;
-  transition:.2s;
-}
-
-.stat-card:hover{
-  transform:translateY(-3px);
-  box-shadow:0 8px 22px #14243d12;
-}
-
-.stat-card p{
-  color:var(--muted);
-  margin:0 0 13px;
-  font-size:13px;
-}
-
-.stat-card h2{font-size:29px;margin:0;color:var(--navy)}
-
-.panel{margin-bottom:24px;overflow:hidden}
-
-.panel-header{
-  padding:19px 21px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  border-bottom:1px solid var(--border);
-  flex-wrap:wrap;
-}
-
-.panel-header h3{margin:0;font-size:16px}
-
-.table-wrap{overflow-x:auto}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:750px;
-}
-
-th,td{
-  padding:15px 17px;
-  text-align:left;
-  border-bottom:1px solid var(--border);
-  font-size:13px;
-}
-
-th{
-  background:#f6f8fb;
-  color:#718096;
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-}
-
-tr:hover td{background:#fafbfd}
-
-input,select,textarea{
-  padding:11px 13px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:white;
-  outline:none;
-  color:var(--text);
-  width:100%;
-}
-
-input:focus,select:focus,textarea:focus{
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px #d9ad5520;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px;
-}
-
-.form-group label{
-  display:block;
-  font-size:12px;
-  margin-bottom:7px;
-  color:var(--muted);
-}
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:#101c3280;
-  z-index:10;
-  align-items:center;
-  justify-content:center;
-  padding:15px;
-}
-
-.modal-box{
-  background:white;
-  width:100%;
-  max-width:650px;
-  border-radius:14px;
-  padding:27px;
-  max-height:90vh;
-  overflow-y:auto;
-}
-
-.modal-box h2{margin-top:0}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
-.secondary{background:#edf0f5;color:var(--text)}
-
-.status{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:20px;
-  font-size:11px;
-  font-weight:bold;
-}
-
-.active-status{background:#e2f5ed;color:#16845f}
-.pending-status{background:#fff3d9;color:#a87513}
-.delivered-status{background:#e7edfb;color:#4769b2}
-
-.empty{text-align:center;color:var(--muted);padding:30px}
-
-.address-box{
-  border:1px solid var(--border);
-  padding:15px;
-  border-radius:9px;
-  margin:8px 0 15px;
-}
-
-.address-box h4{margin:0 0 12px;font-size:14px}
-
-.address-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.small-note{font-size:11px;color:var(--muted);margin-top:5px}
-.footer{color:var(--muted);font-size:11px;text-align:center;padding:20px}
-#appContent{display:none}
-@media(max-width:900px){
-.sidebar{width:195px}
-.stats{grid-template-columns:repeat(2,1fr)}
-.content{padding:18px}
-}
-@media(max-width:600px){
-.layout{display:block}
-.sidebar{width:100%;padding:12px}
-.brand{padding:8px;margin-bottom:10px}
-.nav-label{display:none}
-.nav-item{display:inline-block;width:auto;padding:9px;font-size:12px}
-.topbar{padding:12px 15px;flex-wrap:wrap}
-.stats{grid-template-columns:1fr 1fr;gap:10px}
-.form-grid,.address-grid{grid-template-columns:1fr}
-}
+.sidebar{width:255px;background:linear-gradient(180deg,#0b1424,#172943);color:#fff;padding:22px 14px;flex-shrink:0;box-shadow:4px 0 18px #101c3215}
+.brand{padding:10px 12px 24px;border-bottom:1px solid #ffffff20;margin-bottom:18px}
+.brand h2{margin:0;font-size:21px;letter-spacing:1px}.brand span{color:var(--gold)}.brand small{display:block;color:#aab5c6;margin-top:7px;letter-spacing:2px;font-size:10px}
+.nav-label{color:#8998ad;font-size:10px;letter-spacing:1.7px;padding:13px 12px 7px}
+.nav-item{display:block;width:100%;border:0;background:transparent;color:#c5cede;text-align:left;padding:12px 14px;margin:4px 0;border-radius:9px;cursor:pointer;font-size:13px;transition:.18s}
+.nav-item:hover,.nav-item.active{background:#263b59;color:#fff}.nav-item.active{border-left:4px solid var(--gold);padding-left:10px}
+.main{flex:1;min-width:0}.topbar{min-height:76px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:14px 28px;gap:15px;box-shadow:0 2px 10px #101c3208}.topbar h3{margin:0;font-size:19px;color:var(--navy)}.user{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.content{padding:28px}.page-section{display:none}.page-section.active{display:block}.page-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:24px}.page-heading h1{margin:0 0 7px;font-size:26px;color:var(--navy)}.page-heading p{margin:0;color:var(--muted);font-size:13px}
+.btn{background:var(--navy2);color:#fff;border:0;border-radius:8px;padding:11px 17px;cursor:pointer;font-weight:600;transition:.18s}.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}.btn-gold{background:var(--gold);color:#17243a}.btn-red{background:#c0392b;color:#fff}.btn-whatsapp{background:#168b55;color:#fff;border:0;border-radius:7px;padding:8px 11px;cursor:pointer;font-weight:600;white-space:nowrap}.btn-whatsapp:hover{background:#117344}.btn:focus,.btn-whatsapp:focus,.nav-item:focus{outline:2px solid #d9ad55;outline-offset:2px}
+.dispatch-account{font-size:12px;color:#64748b;background:#f8fafc;border:1px solid var(--border);padding:7px 10px;border-radius:7px}.driver-assignment-note{font-size:12px;color:#64748b;margin-top:6px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}.stat-card,.panel{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}.stat-card{padding:20px}.stat-card p{color:var(--muted);margin:0 0 12px;font-size:13px}.stat-card h2{font-size:28px;margin:0;color:var(--navy)}.panel{margin-bottom:22px;overflow:hidden}.panel-header{padding:17px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap}.panel-header h3{margin:0;font-size:16px;color:var(--navy)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:750px}th,td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}th{background:#f4f6fa;color:#68778d;font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}tbody tr:hover{background:#fbfcfe}
+input,select,textarea{padding:10px 12px;border:1px solid var(--border);border-radius:7px;background:#fff;outline:none;color:var(--text);width:100%;font:inherit}input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d9ad5520}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.form-group label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted)}.modal{display:none;position:fixed;inset:0;background:#101c3280;z-index:1000;align-items:center;justify-content:center;padding:15px}.modal-box{background:#fff;width:100%;max-width:650px;border-radius:13px;padding:25px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #0003}.modal-box h2{margin-top:0;color:var(--navy)}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.secondary{background:#edf0f5;color:var(--text)}.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:bold}.active-status{background:#e2f5ed;color:#16845f}.pending-status{background:#fff3d9;color:#a87513}.delivered-status{background:#e7edfb;color:#4769b2}.empty{text-align:center;color:var(--muted);padding:30px}.address-box{border:1px solid var(--border);padding:14px;border-radius:9px;margin:8px 0 15px}.address-box h4{margin:0 0 12px;font-size:14px;color:var(--navy)}.address-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.small-note{font-size:11px;color:var(--muted);margin-top:5px}.footer{color:var(--muted);font-size:11px;text-align:center;padding:20px}#appContent{display:none}#liveTruckMap{width:100%;height:550px;border-radius:12px;z-index:1}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;box-shadow:var(--shadow)}
+@media(max-width:1000px){.sidebar{width:215px}.content{padding:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{padding:13px 18px}}
+@media(max-width:650px){.layout{display:block}.sidebar{width:100%;padding:12px}.brand{padding:8px 10px 13px;margin-bottom:8px}.nav-label{display:none}.nav-item{display:inline-block;width:auto;padding:9px 10px;font-size:12px;margin:3px}.nav-item.active{padding-left:7px}.topbar{padding:12px 15px;align-items:flex-start;flex-direction:column}.content{padding:14px}.stats{grid-template-columns:1fr 1fr;gap:10px}.stat-card{padding:14px}.stat-card h2{font-size:23px}.form-grid,.address-grid{grid-template-columns:1fr}.page-heading h1{font-size:22px}#liveTruckMap{height:420px}.modal-box{padding:18px}}
 </style>
 </head>
 
@@ -493,7 +185,7 @@ input:focus,select:focus,textarea:focus{
   <div class="panel">
     <div class="panel-header"><h3>Driver Directory</h3></div>
     <div class="table-wrap">
-      <table><thead><tr><th>Name</th><th>Phone</th><th>Truck</th><th>Address</th></tr></thead>
+      <table><thead><tr><th>Driver Name</th><th>Phone Number</th><th>Truck</th><th>Address</th><th>Send Dispatch</th></tr></thead>
       <tbody id="driverTable"></tbody></table>
     </div>
   </div>
@@ -1225,7 +917,7 @@ async function sendDispatchToDriver(loadNumber) {
       "Delivery: " + (load.delivery || "N/A"),
       "Dispatch Contact: 5305656348",
       "",
-      "Please open this link and allow location access while driving:",
+      "Please open this link and allow location access while driving (with your permission):",
       trackingLink
     ].join("\n");
 
@@ -1372,14 +1064,24 @@ async function loadSavedDrivers(){
 }
 
 function renderDrivers(){
-  document.getElementById("driverTable").innerHTML = drivers.map(d => `
-    <tr>
-      <td>${escapeHTML(d.name)}</td>
-      <td>${escapeHTML(d.phone)}</td>
-      <td>${escapeHTML(d.truck)}</td>
-      <td>${escapeHTML(d.address)}</td>
-    </tr>
-  `).join("") || '<tr><td colspan="4" class="empty">No drivers added.</td></tr>';
+  document.getElementById("driverTable").innerHTML = drivers.map(d => {
+    const assignedLoad = loads.find(load =>
+      String(load.driver || "").trim().toLowerCase() === String(d.name || "").trim().toLowerCase() &&
+      !["delivered", "cancelled"].includes(String(load.status || "").trim().toLowerCase())
+    );
+    const dispatchButton = assignedLoad
+      ? `<button type="button" class="btn-whatsapp" onclick="sendDispatchToDriver('${escapeHTML(assignedLoad.number)}')">Send Dispatch</button>`
+      : `<span class="small-note">No active load</span>`;
+    return `
+      <tr>
+        <td><strong>${escapeHTML(d.name)}</strong></td>
+        <td>${escapeHTML(d.phone)}</td>
+        <td>${escapeHTML(d.truck)}</td>
+        <td>${escapeHTML(d.address)}</td>
+        <td>${dispatchButton}</td>
+      </tr>
+    `;
+  }).join("") || '<tr><td colspan="5" class="empty">No drivers added.</td></tr>';
   renderDriverOptions();
 }
 // ------------------------------------
