@@ -652,18 +652,18 @@ let loads=[];
 let drivers=[];
 let customers=[];
 
-document.getElementById("loadForm").addEventListener("submit",function(e){
+document.getElementById("loadForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  const number=document.getElementById("loadNo").value.trim();
+  const number = document.getElementById("loadNo").value.trim();
 
-  if(loads.some(x=>x.number===number)){
+  if(loads.some(x => x.number === number)){
     alert("This load number already exists.");
     return;
   }
 
-  const pickup=getAddress("pickup");
-  const delivery=getAddress("delivery");
+  const pickup = getAddress("pickup");
+  const delivery = getAddress("delivery");
 
   if(!document.getElementById("pickupCountry").value ||
      !document.getElementById("pickupCity").value){
@@ -677,19 +677,48 @@ document.getElementById("loadForm").addEventListener("submit",function(e){
     return;
   }
 
-  loads.push({
-    number,
-    driver:document.getElementById("loadDriver").value.trim(),
-    truck:document.getElementById("loadTruck").value.trim(),
-    broker:document.getElementById("loadBroker").value.trim(),
-    pickup,
-    delivery,
-    rate:Number(document.getElementById("loadRate").value),
-    status:document.getElementById("loadStatus").value
-  });
+  const newLoad = {
+    load_number: number,
+    driver: document.getElementById("loadDriver").value.trim(),
+    truck: document.getElementById("loadTruck").value.trim(),
+    broker: document.getElementById("loadBroker").value.trim(),
+    pickup: pickup,
+    delivery: delivery,
+    rate: Number(document.getElementById("loadRate").value),
+    status: document.getElementById("loadStatus").value
+  };
 
-  this.reset();
-  closeModal("loadModal");
+  try {
+    const { data, error } = await window.supabaseClient
+      .from("loads")
+      .insert(newLoad)
+      .select()
+      .single();
+
+    if(error) throw error;
+
+    loads.push({
+      number: data.load_number,
+      driver: data.driver,
+      truck: data.truck,
+      broker: data.broker,
+      pickup: data.pickup,
+      delivery: data.delivery,
+      rate: Number(data.rate),
+      status: data.status
+    });
+
+    renderLoads();
+    this.reset();
+    closeModal("loadModal");
+
+    alert("Load saved successfully!");
+
+  } catch(error) {
+    console.error("Load saving error:", error);
+    alert("Load could not be saved: " + error.message);
+  }
+});
   // ------------------------------------
 // LOAD MANAGEMENT
 // ------------------------------------
