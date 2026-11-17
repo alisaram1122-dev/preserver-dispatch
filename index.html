@@ -59,7 +59,7 @@ body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text
 .page-heading p{margin:0;color:var(--muted);font-size:13px}
 .btn{background:var(--navy);color:white;border:0;border-radius:6px;padding:11px 17px;cursor:pointer;font-weight:600}
 .btn-gold{background:var(--gold);color:#18243a}
-.btn-red{background:#c0392b;color:white}
+.btn-red{background:#c0392b;color:white}\n.btn-whatsapp{background:#168b55;color:white;border:0;border-radius:6px;padding:8px 10px;cursor:pointer;font-weight:600;white-space:nowrap}\n.btn-whatsapp:hover{background:#117344}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:17px;margin-bottom:25px}
 .stat-card,.panel{background:white;border:1px solid var(--border);border-radius:10px}
 .stat-card{padding:20px}
@@ -189,15 +189,17 @@ input:focus,select:focus{border-color:var(--gold)}
       <table>
         <thead>
           <tr>
-  <th>Load #</th>
-  <th>Driver</th>
-  <th>Truck</th>
-  <th>Pickup</th>
-  <th>Delivery</th>
-  <th>Rate</th>
-  <th>Status</th>
-  <th>Tracking</th>
-</tr>
+            <th>Load #</th>
+            <th>Driver</th>
+            <th>Driver Phone / Dispatch</th>
+            <th>Truck</th>
+            <th>Pickup</th>
+            <th>Delivery</th>
+            <th>Rate</th>
+            <th>Status</th>
+            <th>Tracking</th>
+          </tr>
+        </thead>
         <tbody id="loadTable"></tbody>
       </table>
     </div>
@@ -214,17 +216,18 @@ input:focus,select:focus{border-color:var(--gold)}
     <div class="table-wrap">
       <table>
         <thead>
-  <tr>
-    <th>Load #</th>
-    <th>Driver</th>
-    <th>Truck</th>
-    <th>Pickup</th>
-    <th>Delivery</th>
-    <th>Rate</th>
-    <th>Status</th>
-    <th>Tracking</th>
-  </tr>
-</thead>
+          <tr>
+            <th>Load #</th>
+            <th>Driver</th>
+            <th>Driver Phone / Dispatch</th>
+            <th>Truck</th>
+            <th>Pickup</th>
+            <th>Delivery</th>
+            <th>Rate</th>
+            <th>Status</th>
+            <th>Tracking</th>
+          </tr>
+        </thead>
         <tbody id="allLoadTable"></tbody>
       </table>
     </div>
@@ -840,46 +843,120 @@ loads
 }
 
 
+async function getOrCreateTrackingLink(loadNumber) {
+  const load = loads.find(x => String(x.number) === String(loadNumber));
+
+  if (!load) {
+    throw new Error("Load not found.");
+  }
+
+  let { data: session, error } = await supabaseClient
+    .from("tracking_sessions")
+    .select("*")
+    .eq("load_number", loadNumber)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!session) {
+    const result = await supabaseClient
+      .from("tracking_sessions")
+      .insert({
+        load_number: load.number,
+        driver_name: load.driver,
+        truck_number: load.truck
+      })
+      .select()
+      .single();
+
+    if (result.error) throw result.error;
+    session = result.data;
+  }
+
+  if (!session.token) {
+    throw new Error("Tracking session did not return a token.");
+  }
+
+  const trackingLink = new URL("tracking.html", window.location.href);
+  trackingLink.searchParams.set("token", session.token);
+  return trackingLink.href;
+}
+
+function getDriverForLoad(load) {
+  const driverName = String(load.driver || "").trim().toLowerCase();
+  const truckNumber = String(load.truck || "").trim().toLowerCase();
+
+  return drivers.find(d =>
+    String(d.name || "").trim().toLowerCase() === driverName
+  ) || drivers.find(d =>
+    truckNumber && String(d.truck || "").trim().toLowerCase() === truckNumber
+  );
+}
+
+function normalizeWhatsAppPhone(phone) {
+  let digits = String(phone || "").replace(/\D/g, "");
+
+  // Treat a 10-digit number as a US number.
+  if (digits.length === 10) digits = "1" + digits;
+
+  return digits;
+}
+
+async function sendDispatchToDriver(loadNumber) {
+  // Open a blank tab immediately so the browser does not block WhatsApp
+  // after the asynchronous tracking-link request.
+  const whatsappWindow = window.open("about:blank", "_blank");
+
+  try {
+    const load = loads.find(x => String(x.number) === String(loadNumber));
+    if (!load) throw new Error("Load not found.");
+
+    const driverRecord = getDriverForLoad(load);
+    if (!driverRecord || !driverRecord.phone) {
+      throw new Error(
+        "Driver phone number not found. Add this driver's phone in the Drivers section and make sure the driver name or truck number matches the load."
+      );
+    }
+
+    const phone = normalizeWhatsAppPhone(driverRecord.phone);
+    if (!phone) throw new Error("Driver phone number is invalid.");
+
+    const trackingLink = await getOrCreateTrackingLink(load.number);
+
+    const message = [
+      "PRESERVER TRANS LLC - LOAD DISPATCH",
+      "",
+      "Hello " + (load.driver || "Driver") + ",",
+      "Your load has been dispatched.",
+      "Load Number: " + (load.number || "N/A"),
+      "Truck Number: " + (load.truck || "N/A"),
+      "Pickup: " + (load.pickup || "N/A"),
+      "Delivery: " + (load.delivery || "N/A"),
+      "",
+      "Please open this link and allow location access while driving:",
+      trackingLink
+    ].join("\n");
+
+    const whatsappUrl = "https://wa.me/" + phone + "?text=" + encodeURIComponent(message);
+
+    if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappUrl;
+    } else {
+      window.location.href = whatsappUrl;
+    }
+  } catch (error) {
+    if (whatsappWindow) whatsappWindow.close();
+    console.error("Dispatch sending error:", error);
+    alert("Could not prepare dispatch message: " + error.message);
+  }
+}
+
 async function createLoadTrackingLink(loadNumber) {
   try {
-    const load = loads.find(x => x.number === loadNumber);
-
-    if (!load) {
-      alert("Load not found.");
-      return;
-    }
-
-    let { data: session, error } = await supabaseClient
-      .from("tracking_sessions")
-      .select("*")
-      .eq("load_number", loadNumber)
-      .eq("active", true)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (!session) {
-      const result = await supabaseClient
-        .from("tracking_sessions")
-        .insert({
-          load_number: load.number,
-          driver_name: load.driver,
-          truck_number: load.truck
-        })
-        .select()
-        .single();
-
-      if (result.error) throw result.error;
-      session = result.data;
-    }
-
-    const trackingLink = new URL("tracking.html", window.location.href);
-    trackingLink.searchParams.set("token", session.token);
-
-    await navigator.clipboard.writeText(trackingLink.href);
-
-    alert("Tracking link copied!\nSend this link to your driver on WhatsApp.");
-
+    const trackingLink = await getOrCreateTrackingLink(loadNumber);
+    await navigator.clipboard.writeText(trackingLink);
+    alert("Tracking link copied! You can send it to the driver.");
   } catch(error) {
     console.error("Tracking link error:", error);
     alert("Could not create tracking link: " + error.message);
@@ -887,21 +964,34 @@ async function createLoadTrackingLink(loadNumber) {
 }
 
 function renderLoads(){
-  const search=(document.getElementById("searchLoad")?.value||"").toLowerCase();
-  const filter=document.getElementById("statusFilter")?.value||"All";
+  const search = (document.getElementById("searchLoad")?.value || "").toLowerCase();
+  const filter = document.getElementById("statusFilter")?.value || "All";
 
-  const filtered=loads.filter(load=>{
-    const match=Object.values(load).join(" ").toLowerCase().includes(search);
-    return match && (filter==="All" || load.status===filter);
+  const filtered = loads.filter(load => {
+    const driverRecord = getDriverForLoad(load);
+    const phone = driverRecord?.phone || "";
+    const match = (Object.values(load).join(" ") + " " + phone).toLowerCase().includes(search);
+    return match && (filter === "All" || load.status === filter);
   });
 
-  const rows=filtered.map(load=>{
-    const statusClass=load.status==="Active"?"active-status":
-      load.status==="Delivered"?"delivered-status":"pending-status";
+  const rows = filtered.map(load => {
+    const driverRecord = getDriverForLoad(load);
+    const phone = driverRecord?.phone || "";
+    const phoneCell = phone
+      ? `<button type="button" class="btn-whatsapp"
+           title="Open WhatsApp with dispatch details and tracking link"
+           onclick="sendDispatchToDriver('${escapeHTML(load.number)}')">
+           ${escapeHTML(phone)}
+         </button>`
+      : `<span class="small-note">Add driver phone</span>`;
+
+    const statusClass = load.status === "Active" ? "active-status" :
+      load.status === "Delivered" ? "delivered-status" : "pending-status";
 
     return `<tr>
       <td><strong>${escapeHTML(load.number)}</strong></td>
       <td>${escapeHTML(load.driver)}</td>
+      <td>${phoneCell}</td>
       <td>${escapeHTML(load.truck)}</td>
       <td>${escapeHTML(load.pickup)}</td>
       <td>${escapeHTML(load.delivery)}</td>
@@ -915,23 +1005,22 @@ function renderLoads(){
     </tr>`;
   }).join("");
 
-  const empty='<tr><td colspan="8" class="empty">No loads found.</td></tr>';
+  const empty = '<tr><td colspan="9" class="empty">No loads found.</td></tr>';
 
-  document.getElementById("loadTable").innerHTML=rows||empty;
-  document.getElementById("allLoadTable").innerHTML=rows||empty;
+  document.getElementById("loadTable").innerHTML = rows || empty;
+  document.getElementById("allLoadTable").innerHTML = rows || empty;
 
-  document.getElementById("activeCount").textContent=
-    loads.filter(x=>x.status==="Active").length;
+  document.getElementById("activeCount").textContent =
+    loads.filter(x => x.status === "Active").length;
 
-  document.getElementById("pendingCount").textContent=
-    loads.filter(x=>x.status==="Pending").length;
+  document.getElementById("pendingCount").textContent =
+    loads.filter(x => x.status === "Pending").length;
 
-  document.getElementById("deliveredCount").textContent=
-    loads.filter(x=>x.status==="Delivered").length;
+  document.getElementById("deliveredCount").textContent =
+    loads.filter(x => x.status === "Delivered").length;
 
-  document.getElementById("totalCount").textContent=loads.length;
+  document.getElementById("totalCount").textContent = loads.length;
 }
-
 
 // ------------------------------------
 // DRIVER MANAGEMENT
@@ -958,6 +1047,7 @@ document.getElementById("driverForm").addEventListener("submit", async function(
 
     drivers.push(data);
     renderDrivers();
+    renderLoads();
     this.reset();
     closeModal("driverModal");
 
@@ -980,6 +1070,7 @@ async function loadSavedDrivers(){
 
     drivers = data || [];
     renderDrivers();
+    renderLoads();
 
   } catch(error) {
     console.error("Driver loading error:", error);
