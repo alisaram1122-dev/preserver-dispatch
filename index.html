@@ -371,7 +371,7 @@ input:focus,select:focus{border-color:var(--gold)}
 
 async function checkLogin(){
   try {
-    if(!window.supabaseClient){
+    if(!){
       throw new Error("Supabase configuration not found.");
     }
 
@@ -689,7 +689,7 @@ document.getElementById("loadForm").addEventListener("submit", async function(e)
   };
 
   try {
-    const { data, error } = await window.supabaseClient
+    const { data, error } = await supabaseClient
       .from("loads")
       .insert(newLoad)
       .select()
